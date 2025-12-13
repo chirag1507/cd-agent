@@ -588,7 +588,8 @@ Each feature follows this strict order:
 - [x] Tech stack chosen (TypeScript, Jest, Pact)
 - [x] Testing strategy documented
 - [x] Ways of Working integrated
-- [ ] Project initialized (package.json, tsconfig)
-- [ ] Commands adapted and installed
+- [x] Commands adapted and installed (9 commands in .claude/commands/)
+- [x] npm package structure created (package.json)
+- [ ] Project initialized (tsconfig, dependencies)
 - [ ] First feature implemented with TDD
 - [ ] JIRA MCP integration (Phase 2)
