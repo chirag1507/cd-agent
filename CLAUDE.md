@@ -571,6 +571,7 @@ Each feature follows this strict order:
 
 ## References
 
+- **Workflow Flowchart**: [docs/workflow-flowchart.md](docs/workflow-flowchart.md) - Visual guide to the complete development workflow
 - **Clean Architecture**: [reference/clean-architecture-reference/](reference/clean-architecture-reference/)
 - **Four-Layer BDD**: [reference/acceptance-test-reference/](reference/acceptance-test-reference/)
 - **Rules Reference**: [reference/rules-reference/](reference/rules-reference/)
