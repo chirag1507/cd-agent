@@ -1,0 +1,32 @@
+{
+  "name": "@anthropic/cd-agent",
+  "version": "0.1.0",
+  "description": "XP/CD development agent commands for Claude Code - achieve Elite DORA metrics through disciplined TDD and Continuous Delivery practices",
+  "keywords": [
+    "claude-code",
+    "tdd",
+    "continuous-delivery",
+    "xp",
+    "extreme-programming",
+    "dora-metrics",
+    "clean-architecture",
+    "bdd"
+  ],
+  "author": "Avesta",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chirag1507/cd-agent.git"
+  },
+  "files": [
+    ".claude/commands/**/*",
+    "docs/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "install-commands": "echo 'Copy .claude/commands to your project root'"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
