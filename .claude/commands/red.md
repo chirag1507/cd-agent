@@ -32,9 +32,9 @@ You are in the **RED** phase of the TDD cycle. Your ONLY job is to write ONE fai
 ### DO
 - Write exactly ONE test
 - Make the test fail for the RIGHT reason (assertion failure, not syntax/import error)
-- Use descriptive test names that explain the behavior
+- Use descriptive, behavior-focused test names
 - Follow the Arrange-Act-Assert pattern
-- Use `data-testid` for DOM element selection
+- Use Test Data Builders for entity creation
 - Use `jest.fn()` for stubs and spies at boundaries
 
 ### DON'T
@@ -43,81 +43,114 @@ You are in the **RED** phase of the TDD cycle. Your ONLY job is to write ONE fai
 - Fix import errors by writing implementation (create empty stubs only)
 - Add extra assertions "while you're at it"
 
-## Test Structure by Layer
+## Test Layer Selection
 
-### Sociable Unit Test (Use Case)
+| Layer | When to Use | Rules File |
+|-------|-------------|------------|
+| **Sociable Unit** (BE) | Testing Use Case behavior | `rules/sociable-unit-test.md` |
+| **Sociable Unit** (FE) | Testing Use Case/hooks | `rules/sociable-unit-test-fe.md` |
+| **Component** (BE) | Testing HTTP vertical slice | `rules/component-test-be.md` |
+| **Component** (FE) | Testing React component behavior | `rules/component-test-fe.md` |
+| **Narrow Integration** (BE) | Testing repository with real DB | `rules/narrow-integration-test.md` |
+| **Narrow Integration** (FE) | Testing hooks with real Use Cases | `rules/narrow-integration-test-fe.md` |
+| **Contract** (Consumer) | Testing API client expectations | `rules/contract-test-consumer.md` |
+| **Contract** (Provider) | Verifying consumer contracts | `rules/contract-test-provider.md` |
+| **Acceptance** | Testing business behavior E2E | `rules/acceptance-test.md` |
+
+**IMPORTANT**: Before writing a test, consult the appropriate rules file for that test type.
+
+## Key Principles (Apply to ALL Test Types)
+
+### Test Behavior, Not Implementation
+
+```typescript
+// BAD: Testing interactions (brittle)
+expect(repository.findByEmail).toHaveBeenCalledWith("test@example.com");
+
+// GOOD: Testing state/outcome (robust)
+expect(result.isSuccess).toBe(true);
+expect(result.getValue().email).toBe("test@example.com");
+```
+
+### Use Test Data Builders
+
+```typescript
+// BAD: Direct instantiation
+const user = User.create({ email: Email.create("test@example.com").getValue() });
+
+// GOOD: Use builder (see rules/test-data-builders.md)
+const user = new UserBuilder().withEmail("test@example.com").build();
+```
+
+### Stub Boundaries, Use Real Domain Objects
+
+```typescript
+// REAL: Domain entities and value objects
+const email = Email.create("test@example.com").getValue();
+
+// STUB: Infrastructure boundaries (see rules/test-doubles.md)
+const userRepository = {
+  findByEmail: jest.fn().mockResolvedValue(null),
+  save: jest.fn(),
+};
+```
+
+## Quick Reference by Test Type
+
+### Sociable Unit Test (Backend Use Case)
 ```typescript
 describe('RegisterUserUseCase', () => {
   it('should register user when email is not taken', async () => {
-    // Arrange
+    // Arrange - stub boundaries, real domain
     const userRepository = {
       findByEmail: jest.fn().mockResolvedValue(null),
       save: jest.fn().mockImplementation(user => Promise.resolve(user)),
     };
     const useCase = new RegisterUserUseCase(userRepository);
-    const request = { email: 'test@example.com', password: 'ValidPass123!' };
 
     // Act
-    const result = await useCase.execute(request);
+    const result = await useCase.execute({
+      email: 'test@example.com',
+      password: 'ValidPass123!'
+    });
 
-    // Assert
+    // Assert - verify state, minimal interaction
     expect(result.isSuccess).toBe(true);
-    expect(userRepository.save).toHaveBeenCalled();
+    expect(result.getValue().email.value).toBe('test@example.com');
   });
 });
 ```
 
-### Narrow Integration Test (Repository)
+### Component Test (Frontend)
 ```typescript
-describe('PrismaUserRepository', () => {
-  it('should persist user to database', async () => {
-    // Arrange - use real test database
-    const repository = new PrismaUserRepository(prismaClient);
-    const user = UserBuilder.aUser().build();
+describe('RegistrationForm', () => {
+  it('should display a loading indicator while submitting', () => {
+    // Arrange - use builder, page object
+    const props = new RegistrationFormPropsBuilder().isLoading().build();
+    const { page } = renderComponent(props);
 
-    // Act
-    await repository.save(user);
-    const found = await repository.findByEmail(user.email);
-
-    // Assert
-    expect(found).not.toBeNull();
-    expect(found?.email).toBe(user.email);
+    // Assert - behavior-focused
+    page.shouldBeInLoadingState();
   });
 });
 ```
 
-### Component Test (HTTP API)
+### Component Test (Backend)
 ```typescript
 describe('POST /api/users/register', () => {
   it('should return 201 when registration succeeds', async () => {
     // Arrange
-    const request = { email: 'test@example.com', password: 'ValidPass123!' };
+    mockUserRepository.findByEmail.mockResolvedValue(null);
+    mockUserRepository.save.mockResolvedValue(undefined);
 
     // Act
-    const response = await supertest(app)
+    const response = await request(app)
       .post('/api/users/register')
-      .send(request);
+      .send({ email: 'test@example.com', password: 'ValidPass123!' })
+      .expect(201);
 
     // Assert
-    expect(response.status).toBe(201);
-    expect(response.body.user.email).toBe(request.email);
-  });
-});
-```
-
-### Frontend Component Test
-```typescript
-describe('RegistrationForm', () => {
-  it('should display validation error when email is invalid', async () => {
-    // Arrange
-    render(<RegistrationForm onSubmit={jest.fn()} />);
-
-    // Act
-    await userEvent.type(screen.getByTestId('email-input'), 'invalid-email');
-    await userEvent.click(screen.getByTestId('submit-button'));
-
-    // Assert
-    expect(screen.getByTestId('email-error')).toHaveTextContent('Invalid email');
+    expect(response.body.email).toBe('test@example.com');
   });
 });
 ```
@@ -125,10 +158,11 @@ describe('RegistrationForm', () => {
 ## Process
 
 1. **Identify the behavior** to test from the plan
-2. **Determine the test layer** (unit, integration, component)
-3. **Write the test** following the patterns above
-4. **Run the test** and verify it fails for the RIGHT reason
-5. **If import/syntax error**: Create minimal stub only, then re-run
+2. **Determine the test layer** (use table above)
+3. **Read the appropriate rules file** for that test type
+4. **Write the test** following the patterns in the rules
+5. **Run the test** and verify it fails for the RIGHT reason
+6. **If import/syntax error**: Create minimal stub only, then re-run
 
 ## Handling Import Errors
 
@@ -151,6 +185,7 @@ Before moving to GREEN phase, confirm:
 - [ ] Test is written and saved
 - [ ] Test has been run
 - [ ] Test fails with an ASSERTION error (not import/syntax)
+- [ ] Test follows the rules for its test type
 - [ ] Test name clearly describes the expected behavior
 
 ## Output
@@ -162,6 +197,7 @@ RED PHASE COMPLETE
 
 Test: [test name]
 File: [file path]
+Type: [Sociable Unit | Component | Integration | Contract | Acceptance]
 Failure: [the assertion that failed]
 
 Ready for GREEN phase: /green
