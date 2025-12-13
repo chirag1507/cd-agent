@@ -1,0 +1,239 @@
+---
+description: "Non-negotiable standards for use case implementation based on Alistair Cockburn's Hexagonal Architecture, Robert C. Martin's Clean Architecture, and Ivar Jacobson's use case methodology. These rules ensure use cases remain focused on pure business logic without technical concerns."
+alwaysApply: false
+---
+
+# 🎯 Use Case Implementation Standards
+
+**Status:** Mandatory **Version:** 1.0  
+**Authority Sources:** Alistair Cockburn, Robert C. Martin, Ivar Jacobson
+
+## 📌 Purpose
+
+This document defines non-negotiable standards for implementing use cases based on the foundational work of:
+
+- **Alistair Cockburn** - Hexagonal Architecture & Use Case methodology
+- **Robert C. Martin** - Clean Architecture & SOLID principles
+- **Ivar Jacobson** - Original use case inventor & Object-Oriented Software Engineering
+
+## 🎯 Core Principles
+
+### 1. Single Responsibility Principle (Jacobson & Martin)
+
+**Standard:** Each use case MUST have exactly one reason to change - the business rule it represents.
+
+**Jacobson's Definition:**
+
+> _"A use case captures a contract between the stakeholders of a system about its behavior."_
+
+**Implementation Rules:**
+
+- ✅ **DO:** Focus on ONE business interaction flow
+- ❌ **DON'T:** Mix business logic with technical concerns (logging, caching, session management)
+- ✅ **DO:** Name use cases after business actions (`RegisterUserUseCase`, `ProcessPaymentUseCase`)
+- ❌ **DON'T:** Name use cases after technical operations (`SaveUserToDatabase`, `SendEmailUseCase`)
+
+### 2. Dependency Rule (Cockburn & Martin)
+
+**Cockburn's Hexagonal Architecture Principle:**
+
+> _"The application should be independent of frameworks, databases, and external agencies."_
+
+**Martin's Clean Architecture Dependency Rule:**
+
+> _"Source code dependencies can only point inwards. Nothing in an inner layer can know anything at all about something in an outer layer."_
+
+**Implementation Rules:**
+
+- ✅ **DO:** Depend only on domain entities and repository interfaces
+- ❌ **DON'T:** Import framework-specific code (Express, Prisma, JWT libraries)
+- ✅ **DO:** Use dependency injection for all external services
+- ❌ **DON'T:** Create concrete implementations inside use cases
+
+### 3. Business Logic Purity (Cockburn)
+
+**Cockburn's Application Hexagon:**
+
+> _"The application contains the use cases of the system. The use cases orchestrate the flow of data to and from the entities."_
+
+**Implementation Rules:**
+
+- ✅ **DO:** Orchestrate business entities and domain services
+- ❌ **DON'T:** Handle HTTP requests, database connections, or external API calls
+- ✅ **DO:** Validate business rules and constraints
+- ❌ **DON'T:** Validate input formats (that's presentation layer responsibility)
+- ✅ **DO:** Return domain-meaningful results
+- ❌ **DON'T:** Return HTTP status codes or framework-specific responses
+
+## 📋 Mandatory Implementation Standards
+
+### Use Case Structure
+
+```typescript
+// ✅ CORRECT: Pure business logic use case
+export class RegisterUserUseCase implements UseCase<RegisterUserRequest, RegisterUserResponse> {
+	constructor(
+		private readonly userRepository: UserRepository, // Domain interface
+		private readonly notificationService: NotificationService // Domain interface
+	) {}
+
+	async execute(request: RegisterUserRequest): Promise<RegisterUserResponse> {
+		// 1. Business validation
+		this.validateBusinessRules(request);
+
+		// 2. Business logic orchestration
+		const user = User.create(request);
+		await this.userRepository.save(user);
+
+		// 3. Business event handling
+		await this.notificationService.sendWelcomeNotification(user.email, user.firstName);
+
+		// 4. Return business result
+		return Result.ok({ user });
+	}
+}
+```
+
+### Cross-Cutting Concerns Handling
+
+**Standard:** Use cases MUST NOT handle cross-cutting concerns directly.
+
+**Approved Patterns:**
+
+- **Session Management:** Use SessionDecorator pattern
+- **Logging:** Use LoggingDecorator pattern
+- **Caching:** Use CacheDecorator pattern
+- **Authorization:** Use AuthorizationDecorator pattern
+
+```typescript
+// ✅ CORRECT: Cross-cutting concerns handled via decoration
+const decoratedUseCase = new SessionDecorator(
+	new LoggingDecorator(new RegisterUserUseCase(userRepository, notificationService)),
+	sessionManager,
+	extractSessionData
+);
+```
+
+### Error Handling
+
+**Jacobson's Principle:** Use cases should handle business exceptions, not technical exceptions.
+
+```typescript
+// ✅ CORRECT: Business-focused error handling
+export type RegisterUserResponse = Result<
+	{ user: User },
+	ValidationError | UserAlreadyExistsError | BusinessRuleViolationError
+>;
+
+// ❌ INCORRECT: Technical error handling
+export type RegisterUserResponse = Result<
+	{ user: User },
+	DatabaseConnectionError | HttpError | JWTError
+>;
+```
+
+### Testing Standards
+
+**Martin's Testability Principle:** Use cases should be easily testable without external dependencies.
+
+```typescript
+// ✅ CORRECT: Sociable unit test focusing on business behavior
+describe('RegisterUserUseCase', () => {
+	it('should register user when all business rules are satisfied', async () => {
+		// Arrange: Business scenario
+		const request = createValidRegistrationRequest();
+		userRepository.findByEmail.mockResolvedValue(null);
+
+		// Act: Business operation
+		const result = await useCase.execute(request);
+
+		// Assert: Business outcome
+		expect(result.isSuccess).toBe(true);
+		expect(result.getValue().user.email).toBe(request.email);
+	});
+});
+```
+
+## 🚫 Prohibited Patterns
+
+### ❌ Framework Dependencies
+
+```typescript
+// ❌ WRONG: Framework dependency in use case
+import { Request, Response } from 'express';
+import { PrismaClient } from '@prisma/client';
+
+export class RegisterUserUseCase {
+	async execute(req: Request, res: Response) {
+		// Framework coupling
+		const prisma = new PrismaClient(); // Direct framework usage
+		// ...
+	}
+}
+```
+
+### ❌ Mixed Responsibilities
+
+```typescript
+// ❌ WRONG: Multiple responsibilities
+export class RegisterUserUseCase {
+	async execute(request: RegisterUserRequest) {
+		// Business logic
+		const user = User.create(request);
+
+		// Session management (cross-cutting concern)
+		const token = jwt.sign({ userId: user.id }, JWT_SECRET);
+
+		// Logging (cross-cutting concern)
+		logger.info(`User registered: ${user.email}`);
+
+		// HTTP response (presentation concern)
+		return { status: 201, data: { user, token } };
+	}
+}
+```
+
+### ❌ Technical Error Handling
+
+```typescript
+// ❌ WRONG: Technical exception handling
+export class RegisterUserUseCase {
+	async execute(request: RegisterUserRequest) {
+		try {
+			// Business logic
+		} catch (PrismaClientKnownRequestError) { // Framework-specific error
+			return { error: 'Database error' };
+		} catch (JsonWebTokenError) { // Technical error
+			return { error: 'Token error' };
+		}
+	}
+}
+```
+
+## ✅ Compliance Checklist
+
+Before implementing any use case, verify:
+
+- [ ] **Single Responsibility:** Use case has exactly one business purpose
+- [ ] **No Framework Dependencies:** No imports from Express, Prisma, JWT, etc.
+- [ ] **Domain-Only Dependencies:** Only depends on domain entities and interfaces
+- [ ] **Business-Focused Naming:** Named after business action, not technical operation
+- [ ] **Pure Business Logic:** No session management, logging, or caching code
+- [ ] **Business Error Handling:** Only handles domain-specific errors
+- [ ] **Testable Design:** Can be tested without external infrastructure
+- [ ] **Result Pattern:** Returns Result<Success, BusinessError> type
+- [ ] **Interface Compliance:** Implements UseCase<Request, Response> interface
+
+## 🔍 Enforcement
+
+- **Build-time:** ESLint rules prevent framework imports in use case files
+- **Code Review:** All use cases must pass this checklist before approval
+- **Testing:** Use cases must have sociable unit tests focusing on business behavior
+- **Architecture Review:** Deviations require explicit architectural committee approval
+
+## 📚 References
+
+1. **Alistair Cockburn** - "Hexagonal Architecture" (2005)
+2. **Robert C. Martin** - "Clean Architecture" (2017)
+3. **Ivar Jacobson** - "Object-Oriented Software Engineering: A Use Case Driven Approach" (1992)
+4. **Robert C. Martin** - "Agile Software Development: Principles, Patterns, and Practices" (2002)

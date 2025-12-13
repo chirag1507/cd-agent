@@ -1,0 +1,218 @@
+---
+description: Enforce non-negotiable standards for sociable unit tests in software projects.
+globs:
+  - "src/**/*"
+alwaysApply: false
+---
+
+# 🧪 Standard Operating Procedure: Sociable Unit Tests
+
+**Status:** Mandatory  
+**Version:** 1.0
+
+**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for all Sociable Unit Tests. Deviations are not
+permitted without explicit architectural review and approval.
+
+## 📌 Purpose
+
+This SOP defines the standards for writing Sociable Unit Tests. The primary goal is to ensure that use cases
+(application services) are tested effectively, verifying their behavior and interactions while remaining decoupled from
+internal implementation details and fast to execute.
+
+---
+
+## Scope
+
+This SOP applies to all unit tests written for the application layer, specifically targeting Use Case classes.
+
+## Definitions
+
+- **Sociable Unit Test:** A test that verifies the behavior of a "unit" (e.g., a use case class) by allowing it to
+  collaborate with its direct, genuine dependencies (like value objects or domain entities) but uses Test Doubles for
+  dependencies that cross process boundaries or represent significant external infrastructure (e.g., repositories, email
+  services, external APIs).
+- **Unit:** In the context of this SOP, a "unit" typically refers to a Use Case class and its closely related domain
+  objects (Entities, Value Objects) that it orchestrates.
+
+## Key Principles (Non-Negotiable)
+
+### Behavior-Driven
+
+- **Standard:** Tests MUST verify the observable behavior of the use case from the perspective of a client calling its
+  public interface (e.g., the `execute` method).
+- **Focus:** Test cases should cover primary success scenarios, key business rule enforcement (including failure
+  scenarios like validation errors or domain errors), and significant interactions with direct collaborators.
+- **Example:**
+  - `it("should successfully register a new user", ...)`
+  - `it("should return error when user already exists", ...)`
+  - `it("should validate email format", ...)`
+
+### Collaboration Strategy
+
+- **Standard A (Real Collaborators):** Use REAL instances of domain objects (Entities, Value Objects) that the use case
+  directly creates or orchestrates.
+
+  - **Rationale:** The behavior of these core domain objects is integral to the use case's functionality. Mocking them
+    would obscure the true behavior being tested.
+  - **Example:** When testing `RegisterUserUseCase`, real `Email` and `Password` value objects are created and used.
+    ```typescript
+    // From a test setup for RegisterUserUseCase
+    const emailValueObject = Email.create("test@example.com").getValue();
+    const passwordValueObject = Password.create("ValidPass123!").getValue();
+    const existingUser = User.create({
+      email: emailValueObject,
+      password: passwordValueObject,
+    }).getValue();
+    ```
+
+- **Standard B (Test Doubles for Boundaries):** Use Test Doubles (Stubs or Spies, see [`test-doubles.mdc`](./test-doubles.mdc)) for dependencies that represent interfaces to:
+  - Infrastructure concerns (e.g., `UserRepository`, `EmailService`).
+  - External systems or out-of-process communication.
+  - **Rationale:** This ensures tests are fast, deterministic, and focused on the use case logic rather than the implementation details or reliability of external components. The contracts of these interfaces are tested separately—see [Narrow Integration Test SOP](./narrow-integration-test.mdc) for details on how repository and infrastructure contracts are verified.
+  - **Example:**
+    ```typescript
+    // In beforeEach for RegisterUserUseCase tests
+    userRepository = {
+      findByEmail: jest.fn(),
+      save: jest.fn(),
+    };
+    emailService = {
+      sendConfirmationEmail: jest.fn(),
+    };
+    useCase = new RegisterUserUseCase(userRepository, emailService);
+    ```
+
+### Decoupling from Structure, Coupling to Behavior
+
+- **Standard:** Tests MUST interact with the Use Case _only_ through its public API. Tests MUST NOT rely on internal
+  methods, properties, or implementation structure of the Use Case.
+- **Rationale:** This ensures that refactoring the internal implementation of a Use Case (without changing its
+  observable behavior) does not break its tests. This is a core principle of maintainable tests.
+- **Verification:** Assertions should be made on:
+  1.  The `Result` object returned by the use case's `execute` method.
+  2.  The interactions with Test Doubles (Stubs or Spies, see [`test-doubles.mdc`](./test-doubles.mdc)), verifying that the correct methods on collaborators were called with expected arguments.
+
+### Speed and Determinism
+
+- **Standard:** Sociable Unit Tests MUST be fast and deterministic.
+- **Rationale:** Fast tests are run frequently, providing quick feedback. Determinism ensures reliability.
+- **Implementation:** Achieved by using in-memory Test Doubles for I/O-bound or slow dependencies.
+
+### Test State, Not Interactions
+
+- **Standard:** Tests MUST primarily verify the observable state and behavior of the system, not the specific
+  interactions with collaborators.
+- **Focus on:**
+  - The `Result` object returned by the use case
+  - The actual domain objects created/modified
+  - Observable side effects and state changes
+- **Minimize:** Interaction verification (mocking framework assertions)
+- **Rationale:**
+  - State testing is less brittle and more maintainable
+  - Focuses on what the system does, not how it does it
+  - Allows for refactoring without breaking tests
+  - Better expresses the actual behavior we care about
+- **Example:**
+
+  ```typescript
+  // ❌ Brittle - Testing interactions (couples to implementation)
+  it("should register user - brittle approach", async () => {
+    // Arrange
+    const dto = {
+      email: "test@example.com",
+      password: "ValidPass123!",
+      name: "John Doe",
+    };
+    userRepository.findByEmail = jest.fn().mockResolvedValue(null);
+    userRepository.save = jest.fn().mockResolvedValue(undefined);
+    emailService.sendConfirmationEmail = jest.fn().mockResolvedValue(undefined);
+
+    // Act
+    await useCase.execute(dto);
+
+    // Assert - Focus on HOW (brittle, implementation-dependent)
+    expect(userRepository.findByEmail).toHaveBeenCalledWith("test@example.com");
+    expect(userRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: expect.objectContaining({ value: "test@example.com" }),
+        name: "John Doe",
+      })
+    );
+    expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith(
+      "test@example.com"
+    );
+  });
+
+  // ✅ Robust - Testing state/behavior (focuses on outcomes)
+  it("should register user - robust approach", async () => {
+    // Arrange
+    const dto = {
+      email: "test@example.com",
+      password: "ValidPass123!",
+      name: "John Doe",
+    };
+    userRepository.findByEmail = jest.fn().mockResolvedValue(null);
+    userRepository.save = jest.fn().mockResolvedValue(undefined);
+    emailService.sendConfirmationEmail = jest.fn().mockResolvedValue(undefined);
+
+    // Act
+    const result = await useCase.execute(dto);
+
+    // Assert - Focus on WHAT (robust, behavior-focused)
+    expect(result.isSuccess).toBe(true);
+
+    const user = result.getValue();
+    expect(user).toBeInstanceOf(User);
+    expect(user.email.value).toBe("test@example.com");
+    expect(user.name).toBe("John Doe");
+    expect(user.isEmailVerified).toBe(false);
+
+    // Minimal interaction verification for critical side effects only
+    expect(userRepository.save).toHaveBeenCalledTimes(1);
+    expect(emailService.sendConfirmationEmail).toHaveBeenCalledTimes(1);
+  });
+  ```
+
+- **Exception:** Minimal interaction verification is acceptable for critical side effects for public interfaces (e.g.,
+  ensuring email was sent), but should be kept to a minimum (e.g., `toHaveBeenCalledTimes(1)`).
+
+## Test Structure (Arrange-Act-Assert)
+
+- **Standard:** All tests MUST follow the Arrange-Act-Assert (AAA) pattern.
+
+  - **Arrange:** Set up the preconditions, including instantiating the use case, preparing its dependencies (real
+    objects or configuring test doubles).
+  - **Act:** Execute the public method on the use case that is being tested.
+  - **Assert:** Verify the outcome by checking the returned `Result` object and/or asserting interactions with test
+    doubles.
+
+  ```typescript
+  it("should successfully register a new user", async () => {
+    // Arrange
+    const email = "test@example.com";
+    const password = "ValidPass123!";
+    // Configure Test Doubles (Stubs/Spies)
+    userRepository.findByEmail = jest.fn().mockResolvedValue(null);
+    userRepository.save = jest
+      .fn()
+      .mockImplementation((user: User) => Promise.resolve(user));
+    emailService.sendConfirmationEmail = jest.fn().mockResolvedValue(undefined);
+
+    // Act
+    const result = await useCase.execute({ email, password });
+
+    // Assert
+    expect(result.isSuccess).toBe(true);
+    expect(userRepository.save).toHaveBeenCalledWith({ email, password }); // Verifying interaction with Spy
+    expect(emailService.sendConfirmationEmail).toHaveBeenCalledWith(email); // Verifying interaction with Spy
+  });
+  ```
+
+## Example Implementation
+
+- Sociable Unit Test: `src/modules/user/application/use-cases/register-user/register-user.use-case.test.ts`
+
+## Enforcement
+
+Violation of these standards will result in build failures during CI and/or rejection during code review. These
+standards are non-negotiable to maintain the integrity and effectiveness of our testing suite.

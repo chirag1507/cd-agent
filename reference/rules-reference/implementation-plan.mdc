@@ -1,0 +1,127 @@
+---
+description: Enforce the mandatory implementation plan for every new story with strict step order and review gates.
+alwaysApply: false
+---
+
+# Non-Negotiable Implementation Procedure
+
+These steps **must** be followed in strict order for every new story:
+
+> **🧪 MANDATORY:** All coding activities (Backend & Frontend Implementation) **MUST** follow pure TDD and BDD
+> practices. This is non-negotiable for every single behavior change.
+
+## 0. Understand Feature via User Story Map
+
+- Refer to the user story map:  
+  `<project-root>/docs/user-story-map/`  
+  Use this to fully understand feature scope before writing tests or code.
+
+## 0.1. Behavioral Analysis & Human Confirmation (MANDATORY)
+
+- **CRITICAL GATE:** Analyze and document ALL behavioral variants from the feature requirements
+- Present behavioral variants to human for review and confirmation
+- **NO IMPLEMENTATION** (tests, code, or any other steps) may proceed without explicit human approval of behavioral variants
+- This gate prevents wasted effort and ensures correct understanding before development begins
+
+## 1. System Test Definition
+
+- Create Gherkin feature in `system-tests/src/acceptance/features/<story-name>.feature`
+- Implement DSL layer and models in `src/acceptance/dsl/...`
+- Use `system-tests/.cursor/rules/acceptance-test.mdc`
+- **Example Implementation**:
+  1. Feature: `system-tests/src/acceptance/features/account_registration.feature`
+  2. DSL: `system-tests/src/acceptance/dsl/account_registration_dsl.ts`
+  3. Model: `system-tests/src/acceptance/dsl/models/registration.ts`
+- **Gate**: Feature file + DSL + Model must be approved before moving on
+
+## 2. Backend Implementation
+
+**🧪 with TDD approach
+
+**Implementation Guidelines:**
+
+- Add sociable unit tests as per `backend/.cursor/rules/sociable-unit-test.mdc`
+- Implement use case via Clean Architecture in `backend/src/modules/...`
+- Implement component and narrow integration tests as per rules `backend/.cursor/rules/narrow-integration-test.mdc` and
+  `backend/.cursor/rules/component-test.mdc` with TDD approach
+- Use rules for Test Data Management and Test Doubles as per `backend/.cursor/rules/test-data-management.mdc` and
+  `backend/.cursor/rules/test-doubles.mdc`
+- **Example Implementation**:
+  1. Use Case: `backend/src/modules/user/application/use-cases/register-user/register-user.use-case.ts`
+  2. Sociable Unit Test: `backend/src/modules/user/application/use-cases/register-user/register-user.use-case.test.ts`
+  3. Domain Entities and Objects: `backend/src/modules/user/domain/...`
+  4. Infrastructure Layer: `backend/src/modules/user/infrastructure/...`
+  5. Narrow Integration Test:
+     `backend/src/modules/user/infrastructure/persistence/prisma/__tests__/prisma-user.repository.integration.test.ts`
+  6. Mappers: `backend/src/modules/user/infrastructure/persistence/prisma/mappers/user.mapper.ts`
+  7. Presentation Layer: `backend/src/modules/user/presentation/...`
+  8. Component Test: `backend/src/__tests__/register.component.test.ts`
+  9. Component Test: `backend/src/__tests__/register.component.test.ts`
+  10. Shared: Contains shared core, domain, infrastructure, presentation services and objects `backend/src/shared/...`
+- **Gate**: Backend must be reviewed separately
+
+## 3. Frontend Implementation
+
+**🧪 TDD approach with component and integration tests. Unit tests only if there are business rules on the FE. We prefer to write business rules on the BE.
+
+
+**Implementation Guidelines:**
+
+- Follow Clean Architecture in frontend feature folder as per the rule
+  `frontend/.cursor/rules/clean-architecture-fe.mdc`
+- Add data-testid attributes
+- Add sociable unit tests, component, and contract tests as per the rules
+  `frontend/.cursor/rules/sociable-unit-test-fe.mdc`, `frontend/.cursor/rules/component-test-fe.mdc`, and
+  `frontend/.cursor/rules/contract-test-fe.mdc`,
+- Use rules for Test Data Management and Test Doubles as per `frontend/.cursor/rules/test-data-management-fe.mdc` and
+  `frontend/.cursor/rules/test-doubles-fe.mdc`
+- **Example Implementation**:
+  1. Use Case: `frontend/src/features/auth/application/RegisterUserUseCase.ts`
+  2. Hooks: `frontend/src/features/auth/hooks/useRegistration.ts`
+  3. Sociable Unit Test: `frontend/src/features/auth/hooks/useRegistration.test.ts`
+  4. Component: `frontend/src/features/auth/components/RegistrationForm.tsx`
+  5. Component Test: `frontend/src/features/auth/components/RegistrationForm.component.test.tsx`
+  6. Interfaces: `frontend/src/features/auth/interfaces/AuthService.ts` and
+     `frontend/src/features/auth/interfaces/UserRepository.ts`
+  7. Repositories: `frontend/src/features/auth/repositories/UserRepository.ts`
+  8. Contract Test: `frontend/src/features/auth/repositories/UserRepository.pact.test.ts`
+  9. Routes: `frontend/src/features/auth/routes/RegistrationPage.tsx`
+  10. Routes Component Test: `frontend/src/features/auth/routes/RegistrationPage.test.tsx`
+  11. Services: `frontend/src/features/auth/services/AuthServiceAdapter.ts` and
+      `frontend/src/features/auth/services/UserRepository.ts`
+  12. Types: `frontend/src/features/auth/types/User.ts`
+- **Gate**: Frontend must be reviewed separately
+
+## 4. Contract Testing
+
+- Implement provider contract verification tests in backend per `backend/.cursor/rules/provider-contract-test.mdc`
+- **Example Implementation**:
+  1. Provider Contract Test: `backend/src/__tests__/contract/register.provider.contract.test.ts`
+- **Gate**: Contract tests must be reviewed separately
+
+## 5. System Test Implementation
+
+- Add step definitions, page objects, webdriver interactions
+- Use data-testid IDs
+- **Example Implementation**:
+  1. Step Definitions: `system-tests/src/acceptance/step_definitions/account_registration.steps.ts`
+  2. Driver Interface: `system-tests/src/acceptance/drivers/account_registration_driver.interface.ts`
+  3. Web Driver Implementation: `system-tests/src/acceptance/drivers/web/account_registration_web_driver.ts`
+  4. Page Objects: `system-tests/src/acceptance/drivers/web/pages/account_registration.page.ts`
+- **Gate**: System tests must pass review
+
+---
+
+## Critical Rules (Non-Negotiable)
+
+1. **MANDATORY TDD:** All coding activities MUST follow pure TDD and BDD practices
+2. Complete & approve each step before starting the next
+3. Steps executed in exact order—no deviations
+4. Commit each step separately with gate confirmation
+5. Strict adherence to all referenced Rules
+6. Test data and doubles per respective Rules
+7. Use consistent `data-testid`s across frontend and system layers
+8. In cycle mode I should be able to skip any step like for example I do not want to write contract tests then I should be able to skip it.
+
+
+---

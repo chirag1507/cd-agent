@@ -1,0 +1,488 @@
+---
+description: Enforce non-negotiable standards for test data management for tests in frontend projects
+globs:
+  - "src/**/*"
+alwaysApply: false
+---
+
+# 🧪 Standard Operating Procedure: Frontend Test Data Management
+
+**Status:** Mandatory  
+**Version:** 1.0
+
+**NON-NEGOTIABLE STANDARD:** Adherence to this SOP is mandatory for managing test data in frontend automated tests, particularly for Component Tests. Deviations are not permitted without explicit architectural review and approval.
+
+---
+
+## Table of Contents
+
+1. [Purpose](#1-purpose)
+2. [Guiding Principles (Non-Negotiable)](#2-guiding-principles-non-negotiable)
+   - 2.1. [Isolate Component Props with Test Data Builders](#21-isolate-component-props-with-test-data-builders)
+   - 2.2. [Ensure Sensible Defaults](#22-ensure-sensible-defaults)
+   - 2.3. [Use the Minimum Necessary Data Customization](#23-use-the-minimum-necessary-data-customization)
+3. [Example of Builder Implementation and Usage](#3-example-of-builder-implementation-and-usage)
+   - 3.1. [Builder Implementation](#31-builder-implementation)
+   - 3.2. [Test Implementation](#32-test-implementation)
+4. [Complete Implementation Examples](#4-complete-implementation-examples)
+5. [Enforcement](#5-enforcement)
+
+---
+
+## 1. Purpose
+
+This SOP defines the standards for creating and managing test data (i.e., component props) for frontend tests. The goal is to ensure our tests are fast, reliable, maintainable, and decoupled from component implementation details.
+
+## 2. Guiding Principles (Non-Negotiable)
+
+### 2.1. Isolate Component Props with Test Data Builders
+
+- **Rule:** For creating the `props` object for a component under test, tests **MUST** use a **Test Data Builder**. Manually creating props objects within test files is forbidden.
+- **Rationale:** This decouples tests from the component's `props` interface. If a prop is added, changed, or removed, we only need to update the builder, not every test that uses the component. This makes our test suite significantly more robust and easier to maintain.
+- **Location:** Builders MUST be located in the `src/__tests__/builders/` directory.
+
+### 2.2. Ensure Sensible Defaults
+
+- **Rule:** Every Test Data Builder MUST provide sensible, valid default values for all required props. A call to `.build()` with no customizations should produce a valid props object that allows the component to render without errors.
+- **Rationale:** This simplifies test setup by ensuring a baseline of valid data, allowing tests to focus only on the data they need to change.
+
+### 2.3. Use the Minimum Necessary Data Customization
+
+- **Rule:** When using a Test Data Builder, tests should only customize the props that are directly relevant to the behavior being tested. All other props should rely on the builder's defaults.
+- **Rationale:** This makes the test's intent clearer by highlighting "what's different" for a specific scenario. It avoids cluttering tests with irrelevant data, making them more readable and focused.
+
+## 3. Example of Builder Implementation and Usage
+
+### 3.1. Builder Implementation
+
+A builder should provide a fluent interface for customization.
+
+**Example: `src/__tests__/builders/item-form-props.builder.ts`**
+
+```typescript
+export class ItemFormPropsBuilder {
+  private props: ItemFormProps = {
+    title: { value: "Default Item", onChange: jest.fn() },
+    description: { value: "Default description", onChange: jest.fn() },
+    category: { value: "electronics", onChange: jest.fn() },
+    onSubmit: jest.fn(),
+    isLoading: false,
+    error: null,
+  };
+
+  withTitle(title: string): this {
+    this.props.title.value = title;
+    return this;
+  }
+
+  withCategory(category: string): this {
+    this.props.category.value = category;
+    return this;
+  }
+
+  isLoading(): this {
+    this.props.isLoading = true;
+    return this;
+  }
+
+  withError(error: string): this {
+    this.props.error = error;
+    return this;
+  }
+
+  build(): ItemFormProps {
+    return this.props;
+  }
+}
+```
+
+### 3.2. Test Implementation
+
+Tests should be clean, declarative, and easy to read.
+
+**✅ CORRECT: Using a builder and specifying only the relevant data.**
+
+```typescript
+it("should display loading states", () => {
+  // Arrange
+  const props = new ItemFormPropsBuilder().isLoading().build();
+  const { page } = renderComponent(props);
+
+  // Assert
+  page.shouldBeInLoadingState();
+});
+```
+
+**❌ FORBIDDEN: Creating data directly and over-specifying.**
+
+```typescript
+it("should display loading states", () => {
+  // Arrange
+  const props = {
+    title: { value: "Sample Item", onChange: jest.fn() }, // Irrelevant for this test
+    description: { value: "Item description", onChange: jest.fn() }, // Irrelevant
+    category: { value: "electronics", onChange: jest.fn() }, // Irrelevant
+    onSubmit: jest.fn(), // Irrelevant
+    isLoading: true, // This is the only relevant piece of data
+    error: null,
+  };
+  const { page } = renderComponent(props);
+
+  // Assert
+  page.shouldBeInLoadingState();
+});
+```
+
+## 4. Complete Implementation Examples
+
+### 4.1. Advanced Test Data Builder with Multiple Scenarios
+
+```typescript
+// src/__tests__/builders/item-form-props.builder.ts
+export interface ItemFormField {
+  value: string;
+  onChange: jest.Mock;
+}
+
+export interface ItemFormProps {
+  title: ItemFormField;
+  description: ItemFormField;
+  category: ItemFormField;
+  onSubmit: jest.Mock;
+  isLoading: boolean;
+  error: string | null;
+  mode?: "create" | "edit";
+  initialData?: {
+    id?: string;
+    title?: string;
+    description?: string;
+    category?: string;
+  };
+}
+
+export class ItemFormPropsBuilder {
+  private props: ItemFormProps = {
+    title: { value: "Default Item", onChange: jest.fn() },
+    description: { value: "Default description", onChange: jest.fn() },
+    category: { value: "electronics", onChange: jest.fn() },
+    onSubmit: jest.fn(),
+    isLoading: false,
+    error: null,
+    mode: "create",
+  };
+
+  // Field value setters
+  withTitle(title: string): this {
+    this.props.title.value = title;
+    return this;
+  }
+
+  withDescription(description: string): this {
+    this.props.description.value = description;
+    return this;
+  }
+
+  withCategory(category: string): this {
+    this.props.category.value = category;
+    return this;
+  }
+
+  // State setters
+  isLoading(): this {
+    this.props.isLoading = true;
+    return this;
+  }
+
+  withError(error: string): this {
+    this.props.error = error;
+    return this;
+  }
+
+  // Mode setters
+  inCreateMode(): this {
+    this.props.mode = "create";
+    this.props.initialData = undefined;
+    return this;
+  }
+
+  inEditMode(initialData: {
+    id: string;
+    title: string;
+    description: string;
+    category: string;
+  }): this {
+    this.props.mode = "edit";
+    this.props.initialData = initialData;
+    this.props.title.value = initialData.title;
+    this.props.description.value = initialData.description;
+    this.props.category.value = initialData.category;
+    return this;
+  }
+
+  // Callback customization
+  withOnSubmit(onSubmit: jest.Mock): this {
+    this.props.onSubmit = onSubmit;
+    return this;
+  }
+
+  withFieldCallbacks(callbacks: {
+    onTitleChange?: jest.Mock;
+    onDescriptionChange?: jest.Mock;
+    onCategoryChange?: jest.Mock;
+  }): this {
+    if (callbacks.onTitleChange) {
+      this.props.title.onChange = callbacks.onTitleChange;
+    }
+    if (callbacks.onDescriptionChange) {
+      this.props.description.onChange = callbacks.onDescriptionChange;
+    }
+    if (callbacks.onCategoryChange) {
+      this.props.category.onChange = callbacks.onCategoryChange;
+    }
+    return this;
+  }
+
+  // Convenience methods for common scenarios
+  withValidationError(): this {
+    return this.withError("Title is required");
+  }
+
+  withNetworkError(): this {
+    return this.withError("Failed to save item. Please try again.");
+  }
+
+  withEmptyFields(): this {
+    this.props.title.value = "";
+    this.props.description.value = "";
+    this.props.category.value = "";
+    return this;
+  }
+
+  // Build method
+  build(): ItemFormProps {
+    // Create fresh mock functions to avoid test pollution
+    return {
+      ...this.props,
+      title: { ...this.props.title, onChange: jest.fn() },
+      description: { ...this.props.description, onChange: jest.fn() },
+      category: { ...this.props.category, onChange: jest.fn() },
+      onSubmit: jest.fn(),
+    };
+  }
+}
+```
+
+### 4.2. Factory Functions for Common Scenarios
+
+```typescript
+// src/__tests__/builders/item-form-props.factory.ts
+import { ItemFormPropsBuilder } from "./item-form-props.builder";
+
+export const ItemFormPropsFactory = {
+  // Basic scenarios
+  default: () => new ItemFormPropsBuilder(),
+
+  loading: () => new ItemFormPropsBuilder().isLoading(),
+
+  withValidationError: () => new ItemFormPropsBuilder().withValidationError(),
+
+  withNetworkError: () => new ItemFormPropsBuilder().withNetworkError(),
+
+  // Mode-specific scenarios
+  createMode: () => new ItemFormPropsBuilder().inCreateMode(),
+
+  editMode: (
+    item = {
+      id: "item-123",
+      title: "Existing Item",
+      description: "Existing description",
+      category: "books",
+    }
+  ) => new ItemFormPropsBuilder().inEditMode(item),
+
+  // Field-specific scenarios
+  withCustomTitle: (title: string) =>
+    new ItemFormPropsBuilder().withTitle(title),
+
+  withEmptyFields: () => new ItemFormPropsBuilder().withEmptyFields(),
+
+  // Complex scenarios
+  editModeWithError: (error: string) =>
+    new ItemFormPropsBuilder()
+      .inEditMode({
+        id: "item-123",
+        title: "Existing Item",
+        description: "Desc",
+        category: "books",
+      })
+      .withError(error),
+
+  loadingInEditMode: () =>
+    new ItemFormPropsBuilder()
+      .inEditMode({
+        id: "item-123",
+        title: "Existing Item",
+        description: "Desc",
+        category: "books",
+      })
+      .isLoading(),
+};
+```
+
+### 4.3. Real Test Examples Using Builders
+
+```typescript
+// src/features/items/components/__tests__/ItemForm.component.test.tsx
+import { render } from "@testing-library/react";
+import { ItemForm } from "../ItemForm";
+import { ItemFormPropsBuilder } from "../../../../__tests__/builders/item-form-props.builder";
+import { ItemFormPropsFactory } from "../../../../__tests__/builders/item-form-props.factory";
+import { ItemFormPage } from "../../../../__tests__/page-objects/item-form.page";
+
+describe("Component Test: ItemForm", () => {
+  const renderComponent = (props: any) => {
+    render(<ItemForm {...props} />);
+    return { page: new ItemFormPage() };
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe("Component State Rendering", () => {
+    it("should render create mode correctly", () => {
+      // Arrange - Only specify what matters for this test
+      const props = ItemFormPropsFactory.createMode().build();
+      const { page } = renderComponent(props);
+
+      // Assert
+      expect(page.titleField).toBeInTheDocument();
+      expect(page.submitButton).toHaveTextContent("Create Item");
+    });
+
+    it("should render edit mode correctly", () => {
+      // Arrange - Using factory for common scenario
+      const props = ItemFormPropsFactory.editMode().build();
+      const { page } = renderComponent(props);
+
+      // Assert
+      expect(page.titleField).toHaveValue("Existing Item");
+      expect(page.submitButton).toHaveTextContent("Update Item");
+    });
+
+    it("should display loading states", () => {
+      // Arrange - Clean, focused test data
+      const props = ItemFormPropsFactory.loading().build();
+      const { page } = renderComponent(props);
+
+      // Assert
+      page.shouldBeInLoadingState();
+    });
+
+    it("should display validation errors", () => {
+      // Arrange
+      const props = ItemFormPropsFactory.withValidationError().build();
+      const { page } = renderComponent(props);
+
+      // Assert
+      page.shouldShowError("Title is required");
+    });
+
+    it("should display network errors", () => {
+      // Arrange
+      const props = ItemFormPropsFactory.withNetworkError().build();
+      const { page } = renderComponent(props);
+
+      // Assert
+      page.shouldShowError("Failed to save item");
+    });
+  });
+
+  describe("User Interactions", () => {
+    it("should handle form submission", () => {
+      // Arrange
+      const mockOnSubmit = jest.fn();
+      const props = new ItemFormPropsBuilder()
+        .withOnSubmit(mockOnSubmit)
+        .build();
+      const { page } = renderComponent(props);
+
+      // Act
+      page.performItemCreation("New Item", "New description", "electronics");
+
+      // Assert
+      expect(mockOnSubmit).toHaveBeenCalledWith({
+        title: "New Item",
+        description: "New description",
+        category: "electronics",
+      });
+    });
+
+    it("should handle field changes", () => {
+      // Arrange
+      const mockTitleChange = jest.fn();
+      const props = new ItemFormPropsBuilder()
+        .withFieldCallbacks({ onTitleChange: mockTitleChange })
+        .build();
+      const { page } = renderComponent(props);
+
+      // Act
+      page.fillTitleField("Updated Title");
+
+      // Assert
+      expect(mockTitleChange).toHaveBeenCalledWith(
+        expect.objectContaining({
+          target: expect.objectContaining({ value: "Updated Title" }),
+        })
+      );
+    });
+  });
+
+  describe("Edge Cases", () => {
+    it("should handle empty form submission", () => {
+      // Arrange
+      const mockOnSubmit = jest.fn();
+      const props = new ItemFormPropsBuilder()
+        .withEmptyFields()
+        .withOnSubmit(mockOnSubmit)
+        .build();
+      const { page } = renderComponent(props);
+
+      // Act
+      page.submitForm();
+
+      // Assert
+      expect(mockOnSubmit).not.toHaveBeenCalled();
+      page.shouldShowValidationErrors();
+    });
+
+    it("should handle edit mode with network error", () => {
+      // Arrange
+      const props =
+        ItemFormPropsFactory.editModeWithError("Connection failed").build();
+      const { page } = renderComponent(props);
+
+      // Assert
+      page.shouldShowError("Connection failed");
+      expect(page.titleField).toHaveValue("Existing Item");
+    });
+  });
+});
+```
+
+### 4.4. Builder Index File for Easy Imports
+
+```typescript
+// src/__tests__/builders/index.ts
+export { ItemFormPropsBuilder } from "./item-form-props.builder";
+export { ItemFormPropsFactory } from "./item-form-props.factory";
+
+// For other components
+export { UserProfilePropsBuilder } from "./user-profile-props.builder";
+export { ProductListPropsBuilder } from "./product-list-props.builder";
+export { SearchFormPropsBuilder } from "./search-form-props.builder";
+```
+
+## 5. Enforcement
+
+Correct application of the Test Data Builder pattern as defined here is critical for maintaining a healthy and scalable test suite. Violations will be addressed during code reviews. These standards are **non-negotiable**.

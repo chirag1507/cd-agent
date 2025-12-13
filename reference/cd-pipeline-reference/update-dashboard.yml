@@ -1,0 +1,311 @@
+name: Update Deployment Dashboard
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "*/30 * * * *" # Runs every 30 minutes
+  push:
+    branches:
+      - main
+    paths:
+      - "state/**"
+
+permissions:
+  contents: write # Needed to push changes back to repo
+  actions: read # Needed to read workflow status
+
+jobs:
+  update_dashboard:
+    name: Update Deployment Status Dashboard
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install jq (for JSON processing)
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Read deployment states
+        id: read_state
+        run: |
+          echo "📊 Reading current deployment states..."
+
+          # Read QA deployed versions
+          if [ -f "state/qa-deployed-versions.json" ]; then
+            QA_FRONTEND=$(jq -r '.frontend.version' state/qa-deployed-versions.json)
+            QA_BACKEND=$(jq -r '.backend.version' state/qa-deployed-versions.json)
+            QA_DEPLOYED_AT=$(jq -r '.deployed_at' state/qa-deployed-versions.json)
+            QA_FRONTEND_URL=$(jq -r '.frontend.url' state/qa-deployed-versions.json)
+            QA_BACKEND_URL=$(jq -r '.backend.url' state/qa-deployed-versions.json)
+          else
+            QA_FRONTEND="not-deployed"
+            QA_BACKEND="not-deployed"
+            QA_DEPLOYED_AT="never"
+            QA_FRONTEND_URL="N/A"
+            QA_BACKEND_URL="N/A"
+          fi
+
+          # Read UAT deployed versions
+          if [ -f "state/uat-deployed-versions.json" ]; then
+            UAT_FRONTEND=$(jq -r '.frontend.version' state/uat-deployed-versions.json)
+            UAT_BACKEND=$(jq -r '.backend.version' state/uat-deployed-versions.json)
+            UAT_DEPLOYED_AT=$(jq -r '.deployed_at' state/uat-deployed-versions.json)
+            UAT_FRONTEND_URL=$(jq -r '.frontend.url' state/uat-deployed-versions.json)
+            UAT_BACKEND_URL=$(jq -r '.backend.url' state/uat-deployed-versions.json)
+          else
+            UAT_FRONTEND="not-deployed"
+            UAT_BACKEND="not-deployed"
+            UAT_DEPLOYED_AT="never"
+            UAT_FRONTEND_URL="N/A"
+            UAT_BACKEND_URL="N/A"
+          fi
+
+          # Read QA test results (if exists)
+          if [ -f "state/qa-last-successfully-tested-versions.json" ]; then
+            QA_TESTED_FRONTEND=$(jq -r '.frontend' state/qa-last-successfully-tested-versions.json)
+            QA_TESTED_BACKEND=$(jq -r '.backend' state/qa-last-successfully-tested-versions.json)
+            QA_TESTED_AT=$(jq -r '.tested_at' state/qa-last-successfully-tested-versions.json)
+          else
+            QA_TESTED_FRONTEND="not-tested"
+            QA_TESTED_BACKEND="not-tested"
+            QA_TESTED_AT="never"
+          fi
+
+          # Read UAT test results
+          if [ -f "state/uat-last-successfully-tested-versions.json" ]; then
+            UAT_TESTED_FRONTEND=$(jq -r '.frontend' state/uat-last-successfully-tested-versions.json)
+            UAT_TESTED_BACKEND=$(jq -r '.backend' state/uat-last-successfully-tested-versions.json)
+            UAT_TESTED_AT=$(jq -r '.tested_at' state/uat-last-successfully-tested-versions.json)
+          else
+            UAT_TESTED_FRONTEND="not-tested"
+            UAT_TESTED_BACKEND="not-tested"
+            UAT_TESTED_AT="never"
+          fi
+
+          # Set outputs for QA
+          echo "qa_frontend=$QA_FRONTEND" >> $GITHUB_OUTPUT
+          echo "qa_backend=$QA_BACKEND" >> $GITHUB_OUTPUT
+          echo "qa_deployed_at=$QA_DEPLOYED_AT" >> $GITHUB_OUTPUT
+          echo "qa_frontend_url=$QA_FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "qa_backend_url=$QA_BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "qa_tested_frontend=$QA_TESTED_FRONTEND" >> $GITHUB_OUTPUT
+          echo "qa_tested_backend=$QA_TESTED_BACKEND" >> $GITHUB_OUTPUT
+          echo "qa_tested_at=$QA_TESTED_AT" >> $GITHUB_OUTPUT
+
+          # Set outputs for UAT
+          echo "uat_frontend=$UAT_FRONTEND" >> $GITHUB_OUTPUT
+          echo "uat_backend=$UAT_BACKEND" >> $GITHUB_OUTPUT
+          echo "uat_deployed_at=$UAT_DEPLOYED_AT" >> $GITHUB_OUTPUT
+          echo "uat_frontend_url=$UAT_FRONTEND_URL" >> $GITHUB_OUTPUT
+          echo "uat_backend_url=$UAT_BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "uat_tested_frontend=$UAT_TESTED_FRONTEND" >> $GITHUB_OUTPUT
+          echo "uat_tested_backend=$UAT_TESTED_BACKEND" >> $GITHUB_OUTPUT
+          echo "uat_tested_at=$UAT_TESTED_AT" >> $GITHUB_OUTPUT
+
+      - name: Determine deployment status
+        id: status
+        run: |
+          QA_FRONTEND="${{ steps.read_state.outputs.qa_frontend }}"
+          QA_BACKEND="${{ steps.read_state.outputs.qa_backend }}"
+          QA_TESTED_FRONTEND="${{ steps.read_state.outputs.qa_tested_frontend }}"
+          QA_TESTED_BACKEND="${{ steps.read_state.outputs.qa_tested_backend }}"
+
+          UAT_FRONTEND="${{ steps.read_state.outputs.uat_frontend }}"
+          UAT_BACKEND="${{ steps.read_state.outputs.uat_backend }}"
+          UAT_TESTED_FRONTEND="${{ steps.read_state.outputs.uat_tested_frontend }}"
+          UAT_TESTED_BACKEND="${{ steps.read_state.outputs.uat_tested_backend }}"
+
+          # Determine QA status
+          if [ "$QA_FRONTEND" = "not-deployed" ] || [ "$QA_BACKEND" = "not-deployed" ]; then
+            QA_STATUS="🔴 Not Deployed"
+            QA_COLOR="red"
+          elif [ "$QA_FRONTEND" = "$QA_TESTED_FRONTEND" ] && [ "$QA_BACKEND" = "$QA_TESTED_BACKEND" ]; then
+            QA_STATUS="🟢 Deployed & Tested"
+            QA_COLOR="green"
+          else
+            QA_STATUS="🟡 Deployed (Testing Needed)"
+            QA_COLOR="yellow"
+          fi
+
+          # Determine UAT status
+          if [ "$UAT_FRONTEND" = "not-deployed" ] || [ "$UAT_BACKEND" = "not-deployed" ]; then
+            UAT_STATUS="🔴 Not Deployed"
+            UAT_COLOR="red"
+          elif [ "$UAT_FRONTEND" = "$UAT_TESTED_FRONTEND" ] && [ "$UAT_BACKEND" = "$UAT_TESTED_BACKEND" ]; then
+            UAT_STATUS="🟢 Deployed & Tested"
+            UAT_COLOR="green"
+          else
+            UAT_STATUS="🟡 Deployed (Testing Needed)"
+            UAT_COLOR="yellow"
+          fi
+
+          echo "qa_status=$QA_STATUS" >> $GITHUB_OUTPUT
+          echo "qa_color=$QA_COLOR" >> $GITHUB_OUTPUT
+          echo "uat_status=$UAT_STATUS" >> $GITHUB_OUTPUT
+          echo "uat_color=$UAT_COLOR" >> $GITHUB_OUTPUT
+
+      - name: Generate deployment dashboard
+        run: |
+          echo "📋 Generating deployment dashboard..."
+
+          CURRENT_TIME=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          cat > docs/pipeline-status.md << EOF
+          # Code Clinic Deployment Status
+
+          Last updated: $CURRENT_TIME
+
+          ## QA Environment (Production-Ready Testing)
+
+          **Status**: ${{ steps.status.outputs.qa_status }}
+
+          ### Deployed Versions
+          - **Frontend**: \`${{ steps.read_state.outputs.qa_frontend }}\` → [${{ steps.read_state.outputs.qa_frontend_url }}](${{ steps.read_state.outputs.qa_frontend_url }})
+          - **Backend**: \`${{ steps.read_state.outputs.qa_backend }}\` → [${{ steps.read_state.outputs.qa_backend_url }}](${{ steps.read_state.outputs.qa_backend_url }})
+          - **Deployed at**: ${{ steps.read_state.outputs.qa_deployed_at }}
+
+          ### Last Successful Tests
+          - **Frontend**: \`${{ steps.read_state.outputs.qa_tested_frontend }}\`
+          - **Backend**: \`${{ steps.read_state.outputs.qa_tested_backend }}\`
+          - **Tested at**: ${{ steps.read_state.outputs.qa_tested_at }}
+
+          ---
+
+          ## UAT Environment (User Acceptance Testing)
+
+          **Status**: ${{ steps.status.outputs.uat_status }}
+
+          ### Deployed Versions
+          - **Frontend**: \`${{ steps.read_state.outputs.uat_frontend }}\` → [${{ steps.read_state.outputs.uat_frontend_url }}](${{ steps.read_state.outputs.uat_frontend_url }})
+          - **Backend**: \`${{ steps.read_state.outputs.uat_backend }}\` → [${{ steps.read_state.outputs.uat_backend_url }}](${{ steps.read_state.outputs.uat_backend_url }})
+          - **Deployed at**: ${{ steps.read_state.outputs.uat_deployed_at }}
+
+          ### Last Successful Tests
+          - **Frontend**: \`${{ steps.read_state.outputs.uat_tested_frontend }}\`
+          - **Backend**: \`${{ steps.read_state.outputs.uat_tested_backend }}\`
+          - **Tested at**: ${{ steps.read_state.outputs.uat_tested_at }}
+
+          ---
+
+          ## Quick Actions
+
+          ### Deployment
+          - [🚀 Deploy to Single Environment](../../actions/workflows/release-uat.yml) (Select QA or UAT)
+          - [🎯 Deploy to Both Environments](../../actions/workflows/release-uat.yml) (QA + UAT simultaneously)
+
+          ### Testing
+          - [🧪 Run UAT Acceptance Tests](../../actions/workflows/acceptance-stage-uat.yml)
+
+          ### Management
+          - [📊 Update Dashboard](../../actions/workflows/update-dashboard.yml)
+
+          ## Environment Access
+
+          | Environment | Frontend URL | Backend URL | Purpose |
+          |-------------|--------------|-------------|---------|
+          | **QA** | [${{ steps.read_state.outputs.qa_frontend_url }}](${{ steps.read_state.outputs.qa_frontend_url }}) | [${{ steps.read_state.outputs.qa_backend_url }}](${{ steps.read_state.outputs.qa_backend_url }}) | Production-ready testing |
+          | **UAT** | [${{ steps.read_state.outputs.uat_frontend_url }}](${{ steps.read_state.outputs.uat_frontend_url }}) | [${{ steps.read_state.outputs.uat_backend_url }}](${{ steps.read_state.outputs.uat_backend_url }}) | User acceptance testing |
+
+          ## Status Legend
+
+          - 🟢 **Deployed & Tested**: Everything is working and tested
+          - 🟡 **Deployed (Testing Needed)**: Deployed but needs testing
+          - 🔴 **Not Deployed**: Not yet deployed to this environment
+
+          ---
+
+          *This dashboard is automatically updated by GitHub Actions every 30 minutes*
+          EOF
+
+          echo "✅ Dashboard generated successfully"
+
+      - name: Create status badges
+        run: |
+          echo "🏷️ Creating status badges..."
+
+          mkdir -p docs/badges
+
+          # Create QA status badge data
+          cat > docs/badges/qa-status.json << EOF
+          {
+            "schemaVersion": 1,
+            "label": "QA Status",
+            "message": "${{ steps.status.outputs.qa_status }}",
+            "color": "${{ steps.status.outputs.qa_color }}"
+          }
+          EOF
+
+          # Create UAT status badge data
+          cat > docs/badges/uat-status.json << EOF
+          {
+            "schemaVersion": 1,
+            "label": "UAT Status",
+            "message": "${{ steps.status.outputs.uat_status }}",
+            "color": "${{ steps.status.outputs.uat_color }}"
+          }
+          EOF
+
+          echo "✅ Status badges created"
+
+      - name: Display dashboard summary
+        run: |
+          echo "📊 Code Clinic Deployment Dashboard Summary"
+          echo "==========================================="
+          echo "QA Status: ${{ steps.status.outputs.qa_status }}"
+          echo "Frontend (QA): ${{ steps.read_state.outputs.qa_frontend }} @ ${{ steps.read_state.outputs.qa_frontend_url }}"
+          echo "Backend (QA): ${{ steps.read_state.outputs.qa_backend }} @ ${{ steps.read_state.outputs.qa_backend_url }}"
+          echo "---"
+          echo "UAT Status: ${{ steps.status.outputs.uat_status }}"
+          echo "Frontend (UAT): ${{ steps.read_state.outputs.uat_frontend }} @ ${{ steps.read_state.outputs.uat_frontend_url }}"
+          echo "Backend (UAT): ${{ steps.read_state.outputs.uat_backend }} @ ${{ steps.read_state.outputs.uat_backend_url }}"
+          echo "---"
+          echo "Last Updated: $(date -u)"
+          echo "==========================================="
+
+      - name: Commit dashboard updates
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add docs/
+          if git diff --staged --quiet; then
+            echo "No dashboard changes to commit"
+          else
+            git commit -m "chore: update deployment dashboard - $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Create deployment summary for PR/Issue comments
+        if: github.event_name == 'push'
+        run: |
+          echo "💬 Creating deployment summary for team communication..."
+
+          cat > deployment-summary.md << EOF
+          ## 📊 Code Clinic Deployment Status Update
+
+          ### QA Environment (Production-Ready Testing)
+          **Status**: ${{ steps.status.outputs.qa_status }}
+
+          | Component | Version | URL | Status |
+          |-----------|---------|-----|--------|
+          | Frontend | \`${{ steps.read_state.outputs.qa_frontend }}\` | [${{ steps.read_state.outputs.qa_frontend_url }}](${{ steps.read_state.outputs.qa_frontend_url }}) | Deployed |
+          | Backend | \`${{ steps.read_state.outputs.qa_backend }}\` | [${{ steps.read_state.outputs.qa_backend_url }}](${{ steps.read_state.outputs.qa_backend_url }}) | Deployed |
+
+          **Last tested**: ${{ steps.read_state.outputs.qa_tested_at }}
+
+          ### UAT Environment (User Acceptance Testing)
+          **Status**: ${{ steps.status.outputs.uat_status }}
+
+          | Component | Version | URL | Status |
+          |-----------|---------|-----|--------|
+          | Frontend | \`${{ steps.read_state.outputs.uat_frontend }}\` | [${{ steps.read_state.outputs.uat_frontend_url }}](${{ steps.read_state.outputs.uat_frontend_url }}) | Deployed |
+          | Backend | \`${{ steps.read_state.outputs.uat_backend }}\` | [${{ steps.read_state.outputs.uat_backend_url }}](${{ steps.read_state.outputs.uat_backend_url }}) | Deployed |
+
+          **Last tested**: ${{ steps.read_state.outputs.uat_tested_at }}
+
+          ---
+
+          [📊 View full dashboard](./docs/pipeline-status.md) • [🚀 Deploy to Environment](../../actions/workflows/release-uat.yml) • [🎯 Deploy to Both](../../actions/workflows/release-uat.yml)
+          EOF
+
+          echo "✅ Deployment summary created"

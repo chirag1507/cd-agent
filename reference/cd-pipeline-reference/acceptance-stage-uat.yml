@@ -1,0 +1,154 @@
+name: UAT Acceptance Stage
+
+on:
+  workflow_dispatch: # Allows manual triggering
+  schedule:
+    - cron: "*/15 * * * *" # Runs every 15 minutes
+
+permissions:
+  contents: write
+  actions: read
+  packages: read
+
+concurrency:
+  group: uat-acceptance-tests
+  cancel-in-progress: false
+
+jobs:
+  run_uat_acceptance_tests:
+    name: Run Acceptance Tests on UAT Environment
+    runs-on: ubuntu-latest
+
+    container:
+      image: ghcr.io/${{ github.repository_owner }}/playwright-test-environment:latest
+
+    steps:
+      - name: Checkout Main Repository (for state files)
+        uses: actions/checkout@v4
+        with:
+          path: main-repo
+
+      - name: Checkout System Tests Repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/code-clinic-system-test
+          path: system-tests-repo
+          token: ${{ secrets.PAT_FOR_SYSTEM_TESTS_REPO }}
+
+      - name: Install System Test Dependencies
+        working-directory: ./system-tests-repo
+        run: npm ci
+
+      - name: Check Versions and Run Acceptance Tests
+        env:
+          BASE_URL: http://${{ secrets.UAT_SSH_HOST }}:8080
+          API_URL: http://${{ secrets.UAT_SSH_HOST }}:3002/api
+          NODE_ENV: uat
+          SHOW_NETWORK_LOGS: true
+        run: |
+          set -e # Exit immediately if a command exits with a non-zero status.
+
+          DEPLOYED_VERSIONS_FILE="./main-repo/state/uat-deployed-versions.json"
+          LAST_TESTED_VERSIONS_FILE="./main-repo/state/uat-last-successfully-tested-versions.json"
+
+          echo "Looking for deployed versions file: $DEPLOYED_VERSIONS_FILE"
+          if [ ! -f "$DEPLOYED_VERSIONS_FILE" ]; then
+            echo "Deployed versions file not found. Assuming no versions deployed yet or file is missing."
+            echo "Skipping tests until deployment information is available."
+            exit 0 # Exit successfully, nothing to test
+          fi
+
+          echo "Reading deployed versions from $DEPLOYED_VERSIONS_FILE"
+          DEPLOYED_FRONTEND=$(jq -r '.frontend.version' "$DEPLOYED_VERSIONS_FILE")
+          DEPLOYED_BACKEND=$(jq -r '.backend.version' "$DEPLOYED_VERSIONS_FILE")
+
+          echo "Currently Deployed Frontend: $DEPLOYED_FRONTEND"
+          echo "Currently Deployed Backend: $DEPLOYED_BACKEND"
+
+          if [ "$DEPLOYED_FRONTEND" == "null" ] || [ "$DEPLOYED_BACKEND" == "null" ] || [ -z "$DEPLOYED_FRONTEND" ] || [ -z "$DEPLOYED_BACKEND" ] || [ "$DEPLOYED_FRONTEND" == "unknown" ] || [ "$DEPLOYED_BACKEND" == "unknown" ]; then
+            echo "Error: Could not read valid version information from $DEPLOYED_VERSIONS_FILE. Content:"
+            cat "$DEPLOYED_VERSIONS_FILE"
+            exit 1 # Exit with error
+          fi
+
+          LAST_TESTED_FRONTEND=""
+          LAST_TESTED_BACKEND=""
+
+          echo "Looking for last successfully tested versions file: $LAST_TESTED_VERSIONS_FILE"
+          if [ -f "$LAST_TESTED_VERSIONS_FILE" ]; then
+            echo "Reading last tested versions from $LAST_TESTED_VERSIONS_FILE"
+            LAST_TESTED_FRONTEND=$(jq -r '.frontend' "$LAST_TESTED_VERSIONS_FILE")
+            LAST_TESTED_BACKEND=$(jq -r '.backend' "$LAST_TESTED_VERSIONS_FILE")
+            echo "Last Successfully Tested Frontend: $LAST_TESTED_FRONTEND"
+            echo "Last Successfully Tested Backend: $LAST_TESTED_BACKEND"
+          else
+            echo "Last successfully tested versions file not found. Will run tests."
+          fi
+
+          if [ "$DEPLOYED_FRONTEND" == "$LAST_TESTED_FRONTEND" ] && [ "$DEPLOYED_BACKEND" == "$LAST_TESTED_BACKEND" ]; then
+            echo "Deployed versions are the same as the last successfully tested versions. No new tests needed."
+            exit 0 # Exit successfully
+          fi
+
+          echo "New versions detected. Proceeding with UAT acceptance tests."
+          echo "Frontend: $DEPLOYED_FRONTEND (was $LAST_TESTED_FRONTEND)"
+          echo "Backend: $DEPLOYED_BACKEND (was $LAST_TESTED_BACKEND)"
+
+          # Run Backend Connectivity Diagnostics first
+          echo "Running backend connectivity diagnostics against UAT: $BASE_URL"
+          echo "Backend URL: $API_URL"
+          if ! npm run test:smoke --prefix ./system-tests-repo -- --grep "Backend Connectivity Diagnostics"; then
+            echo "Backend connectivity diagnostics FAILED - this will help identify the root cause"
+            echo "Proceeding with smoke tests anyway to gather more information..."
+          else
+            echo "Backend connectivity diagnostics PASSED."
+          fi
+
+          # Run Smoke Tests first
+          echo "Running smoke tests against UAT: $BASE_URL"
+          if ! npm run test:smoke --prefix ./system-tests-repo; then
+            echo "Smoke tests FAILED for Frontend: $DEPLOYED_FRONTEND, Backend: $DEPLOYED_BACKEND"
+            exit 1 # Fail the job
+          fi
+          echo "Smoke tests PASSED."
+
+          # Run Acceptance Tests if Smoke Tests passed
+          echo "Running acceptance tests against UAT: $BASE_URL"
+          if ! npm run test:acceptance:signup --prefix ./system-tests-repo; then
+            echo "Acceptance tests FAILED for Frontend: $DEPLOYED_FRONTEND, Backend: $DEPLOYED_BACKEND"
+            exit 1 # Fail the job
+          fi
+
+          echo "Acceptance tests PASSED for Frontend: $DEPLOYED_FRONTEND, Backend: $DEPLOYED_BACKEND"
+          echo "Updating $LAST_TESTED_VERSIONS_FILE..."
+
+          # Create the JSON content for the last tested versions
+          CURRENT_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat <<EOF > "$LAST_TESTED_VERSIONS_FILE"
+          {
+            "frontend": "$DEPLOYED_FRONTEND",
+            "backend": "$DEPLOYED_BACKEND",
+            "tested_at": "$CURRENT_TIME"
+          }
+          EOF
+
+          echo "Content of updated $LAST_TESTED_VERSIONS_FILE:"
+          cat "$LAST_TESTED_VERSIONS_FILE"
+
+          echo "Committing and pushing $LAST_TESTED_VERSIONS_FILE to main-repo..."
+          cd ./main-repo
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add state/uat-last-successfully-tested-versions.json
+
+          if git diff --staged --quiet; then
+            echo "No changes to $LAST_TESTED_VERSIONS_FILE to commit."
+          else
+            git commit -m "CI: Update UAT last successfully tested versions"
+            echo "Attempting to push changes to remote repository..."
+            git pull --rebase origin main
+            git push origin main
+            echo "Push command executed."
+          fi
+          cd ../
+          echo "Acceptance test cycle complete."

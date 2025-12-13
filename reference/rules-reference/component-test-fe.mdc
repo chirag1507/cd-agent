@@ -1,0 +1,577 @@
+---
+description: Enforce non-negotiable standards for component tests in the Digital Kudos Wall Frontend project
+globs:
+  - 'digital-kudos-wall-frontend/src/**/*'
+alwaysApply: false
+---
+
+# 🧪 Standard Operating Procedure: Frontend Component Tests
+
+**Status:** Mandatory  
+**Version:** 1.1
+
+---
+
+## Table of Contents
+
+1. [Purpose](mdc:digital-kudos-wall/#1-purpose)
+2. [Scope](mdc:digital-kudos-wall/#2-scope)
+3. [Definitions](mdc:digital-kudos-wall/#3-definitions)
+4. [Key Principles (Non-Negotiable)](mdc:digital-kudos-wall/#4-key-principles-non-negotiable)
+   - 4.4. [Test State, Not Interactions (Critical)](mdc:digital-kudos-wall/#44-test-state-not-interactions-critical)
+5. [Page Object Pattern (Mandatory)](mdc:digital-kudos-wall/#5-page-object-pattern-mandatory)
+6. [Test Structure (Arrange-Act-Assert)](mdc:digital-kudos-wall/#6-test-structure-arrange-act-assert)
+7. [What NOT to Test (Implementation Details)](mdc:digital-kudos-wall/#7-what-not-to-test-implementation-details)
+8. [Modern Test Pyramid Alignment](mdc:digital-kudos-wall/#8-modern-test-pyramid-alignment)
+9. [Test Categories and Examples](mdc:digital-kudos-wall/#9-test-categories-and-examples)
+10. [Forbidden Test Types](mdc:digital-kudos-wall/#10-forbidden-test-types)
+11. [Tools and Setup](mdc:digital-kudos-wall/#11-tools-and-setup)
+
+## 1. Purpose
+
+Adherence to this SOP is mandatory for all Frontend Component Tests. Deviations are not permitted without explicit architectural review and approval.
+
+This SOP defines the standards for writing Frontend Component Tests within the Digital Kudos Wall frontend application. The primary goal is to ensure **fast developer feedback** and **granular error detection** by testing component behavior, not implementation details.
+
+## 2. Scope
+
+This SOP applies to all component tests written for React components in the frontend application, focusing on component isolation and behavioral testing.
+
+## 3. Definitions
+
+- **Component Test:** A test that verifies the behavior of a React component in isolation, using Test Doubles for external dependencies and focusing on component responsibilities rather than implementation details.
+- **Component Behavior:** Observable actions and state changes that a component exhibits in response to props, user interactions, or internal state changes.
+- **Implementation Details:** Internal structure, HTML attributes, CSS classes, or framework-specific details that could change without affecting component behavior.
+
+## 4. Key Principles (Non-Negotiable)
+
+### 4.1. Behavior-Driven Testing
+
+- **Standard:** Tests MUST verify the observable behavior of the component from the perspective of a user or parent component.
+- **Focus:** For **stateless components**, test cases should cover how the component renders and behaves based on different prop combinations. For **stateful components**, test cases should cover component states, user interactions, and communication with parent components.
+- **Rationale:** Following Modern Test Pyramid principles to provide fast developer feedback and avoid brittle tests.
+
+#### 4.1.1. Stateless vs Stateful Component Testing
+
+**Stateless Components (Props-Driven):**
+
+- Focus on testing different prop combinations and their resulting render output
+- Test conditional rendering based on prop values
+- Test how props affect component appearance and behavior
+- Example: `RegisterForm` component that renders differently based on `isLoading`, `errors`, `formData` props
+
+**Stateful Components (Internal State):**
+
+- Focus on testing state changes from user interactions
+- Test component lifecycle and state transitions
+- Test communication with parent components through callbacks
+- Example: Components with `useState`, `useEffect`, or complex internal logic
+
+**✅ CORRECT Examples (Behavior-Focused):**
+
+```typescript
+// Component State Rendering
+✅ "should render registration mode correctly"
+✅ "should render login mode correctly"
+✅ "should display error states"
+✅ "should display loading states"
+
+// User Interactions
+✅ "should handle form submission"
+✅ "should handle field changes"
+
+// Component Communication
+✅ "should prevent submission when disabled"
+✅ "should handle state transitions correctly"
+✅ "should render with controlled form values"
+```
+
+**❌ INCORRECT Examples (Implementation Details):**
+
+```typescript
+// HTML/Accessibility Implementation
+❌ "should have proper input types"
+❌ "should have required attributes on form fields"
+❌ "should have correct CSS classes"
+❌ "should have proper ARIA labels"
+
+// Props Interface Edge Cases
+❌ "should handle missing name prop gracefully"
+❌ "should work with minimal required props"
+❌ "should not require name field in login mode"
+
+// Framework-Specific Details
+❌ "should call useEffect on mount"
+❌ "should have correct component structure"
+```
+
+### 4.2. Component Isolation Strategy
+
+- **Standard A (Test Doubles for Dependencies):** Use Jest mocks for all external dependencies including:
+  - Parent component callbacks (`onSubmit`, `onChange`)
+  - External services or APIs
+  - React hooks that perform side effects
+- **Standard B (Real React Rendering):** Use real React rendering with `@testing-library/react` for:
+  - Component rendering and DOM interaction
+  - User event simulation
+  - State management within the component
+
+**Example:**
+
+```typescript
+const mockProps = {
+  name: { value: '', onChange: jest.fn() },
+  email: { value: '', onChange: jest.fn() },
+  password: { value: '', onChange: jest.fn() },
+  onSubmit: jest.fn(),
+  isLoading: false,
+  error: null,
+};
+```
+
+### 4.3. Decoupling from Structure, Coupling to Behavior
+
+- **Standard:** Tests MUST interact with components through user-facing interfaces (labels, roles, text content) NOT through:
+  - CSS selectors or classes
+  - Component internal methods or state
+  - HTML element types or attributes
+
+**✅ CORRECT Approach:**
+
+```typescript
+expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
+expect(
+  screen.getByRole('button', { name: /create account/i })
+).toBeInTheDocument();
+expect(screen.getByText(/registration failed/i)).toBeInTheDocument();
+```
+
+**❌ INCORRECT Approach:**
+
+```typescript
+expect(screen.getByTestId('email-input')).toHaveAttribute('type', 'email');
+expect(container.querySelector('.form-field')).toBeRequired();
+expect(wrapper.find("input[type='email']")).toHaveLength(1);
+```
+
+### 4.4. Test Props-Driven Behavior, Not Interactions (Critical)
+
+- **Standard:** For **stateless components**, tests MUST verify the component's observable behavior based on the props it receives. The test description should reflect the behavior, not the prop that causes it.
+- **Stateless Component Definition:** A component that derives its UI and behavior entirely from the props passed to it. It does not manage its own internal state.
+- **Rationale:** Testing the observable outcome of different prop combinations ensures the component behaves as expected from a user's perspective, without being coupled to the implementation detail of _how_ that state is passed in.
+- **Focus:** Test what the user sees and experiences. The `Arrange` step of the test will set up the props to simulate a scenario, but the test name and `Assert` step will focus on the resulting behavior.
+
+**✅ CORRECT Examples (Behavior-Focused Test Descriptions):**
+
+```typescript
+// Describes WHAT the user sees, not HOW the component is configured
+✅ "should display a loading indicator while an operation is in progress"
+✅ "should show an error message when submission fails"
+✅ "should populate fields with initial data"
+✅ "should disable the submit button when the form is invalid"
+✅ "should prevent editing of a user's email"
+```
+
+**❌ INCORRECT Examples (Props-Focused Test Descriptions):**
+
+```typescript
+// Describes the component's props, which is an implementation detail
+❌ "should display loading state when isLoading prop is true"
+❌ "should display an error when the error prop is set"
+❌ "should display form data correctly when formData prop is provided"
+❌ "should disable the submit button when disabled prop is true"
+❌ "should make the email field readonly when isEmailReadonly is true"
+```
+
+**Testing Strategy Example:**
+
+The test implementation will arrange props to simulate the desired behavior, but the test name remains focused on the outcome.
+
+```typescript
+// ✅ CORRECT: Behavior-focused test name
+test('should display a loading indicator while an operation is in progress', () => {
+  // Arrange: Simulate the "in progress" state by passing the relevant prop
+  const { page } = renderComponent({ isLoading: true });
+
+  // Assert: Verify the observable behavior
+  expect(page.isSubmitButtonDisabled()).toBe(true);
+  expect(page.getSubmitButtonText()).toMatch(/saving/i);
+});
+
+test('should show an error message when submission fails', () => {
+  // Arrange: Simulate the "submission failed" state
+  const { page } = renderComponent({ error: 'Invalid credentials' });
+
+  // Assert: Verify the observable behavior
+  page.shouldShowError('Invalid credentials');
+});
+
+test('should populate fields with initial data', () => {
+  // Arrange: Simulate providing initial data
+  const initialData = { name: 'John Doe', email: 'john.doe@example.com' };
+  const { page } = renderComponent({ initialData });
+
+  // Assert: Verify the observable behavior
+  expect(page.getFieldValue('name')).toBe('John Doe');
+  expect(page.getFieldValue('email')).toBe('john.doe@example.com');
+});
+```
+
+**Key Benefits:**
+
+- **Resilient:** Tests survive implementation changes
+- **User-Focused:** Tests verify what users actually experience
+- **Maintainable:** Less coupling to internal component mechanics
+- **Clear Intent:** Tests document expected behavior, not implementation
+
+### 4.5. Speed and Determinism
+
+- **Standard:** Component Tests MUST be fast (< 2 seconds total execution) and deterministic.
+- **Rationale:** Fast tests provide immediate feedback during development, supporting rapid iteration.
+- **Implementation:** Achieved by avoiding real API calls, timers, or external dependencies.
+
+## 5. Page Object Pattern (Mandatory)
+
+To further enhance test maintainability and adhere to Clean Architecture principles, the **Page Object Pattern** is a **mandatory** standard for all component tests.
+
+### 5.1. Rationale
+
+The Page Object Pattern encapsulates the component's UI and interactions into a separate class, providing several key benefits:
+
+- **DRY (Don't Repeat Yourself):** Selectors and interaction logic are defined once and reused across multiple tests.
+- **Maintainability:** When the component's UI structure changes, updates are only needed in one place—the Page Object—not in every test file.
+- **Readability:** Tests become more declarative and focused on behavior, reading like user scenarios rather than a series of DOM queries.
+- **Clean Architecture:** It separates the "what" (the test's intent) from the "how" (the implementation details of interacting with the component).
+
+### 5.2. Structure
+
+The Page Object infrastructure MUST be organized as follows within the `src/__tests__/page-objects/` directory:
+
+- **`base.page.ts`:** An abstract base class containing common query helpers and utilities for interacting with `@testing-library/react`.
+- **`[component-name].page.ts`:** A dedicated Page Object class for the component under test. It inherits from `BasePage` and exposes high-level methods for interactions and assertions.
+- **`page.factory.ts`:** A factory class responsible for creating instances of Page Objects.
+- **`index.ts`:** An index file that exports all Page Object classes for clean imports.
+
+### 5.3. Implementation Example
+
+A Page Object should expose high-level, behavior-oriented methods.
+
+**Example: `generic-form.page.ts` (For a Stateless Form Component)**
+
+```typescript
+export class GenericFormPage extends BasePage {
+  // Generic element getters
+  getFieldByLabel(label: string | RegExp): HTMLElement {
+    return screen.getByLabelText(label);
+  }
+
+  getButtonByName(name: string | RegExp): HTMLElement {
+    return screen.getByRole('button', { name });
+  }
+
+  // State verification methods
+  isButtonDisabled(name: string | RegExp): boolean {
+    return this.getButtonByName(name).hasAttribute('disabled');
+  }
+
+  getButtonText(name: string | RegExp): string {
+    return this.getButtonByName(name).textContent || '';
+  }
+
+  isFieldDisabled(label: string | RegExp): boolean {
+    return this.getFieldByLabel(label).hasAttribute('disabled');
+  }
+
+  getFieldValue(label: string | RegExp): string {
+    const field = this.getFieldByLabel(label);
+    return (field as HTMLInputElement).value;
+  }
+
+  // Error verification methods
+  shouldShowError(errorMessage: string | RegExp): void {
+    expect(screen.getByText(errorMessage)).toBeInTheDocument();
+  }
+
+  // Generic state verification
+  shouldBeInLoadingState(buttonName: string | RegExp = /submit/i): void {
+    expect(this.isButtonDisabled(buttonName)).toBe(true);
+    expect(this.getButtonText(buttonName)).toMatch(
+      /loading|saving|processing/i
+    );
+  }
+
+  shouldDisplayData(data: Record<string, string>): void {
+    for (const [label, value] of Object.entries(data)) {
+      expect(this.getFieldValue(new RegExp(label, 'i'))).toBe(value);
+    }
+  }
+}
+```
+
+### 5.4. Refactoring Tests to Use Page Objects
+
+Tests MUST be refactored to use the Page Object for all component interactions and assertions.
+
+**❌ INCORRECT (Direct DOM queries in tests):**
+
+```typescript
+test('should display a loading indicator while submitting', () => {
+  renderComponent({ isSubmitting: true });
+
+  expect(screen.getByRole('button', { name: /submit/i })).toBeDisabled();
+  expect(screen.getByRole('button', { name: /submit/i })).toHaveTextContent(
+    /submitting/i
+  );
+});
+```
+
+**✅ CORRECT (Using a Page Object for clean assertions):**
+
+```typescript
+test('should display a loading indicator while submitting', () => {
+  const { page } = renderComponent({ isSubmitting: true });
+
+  page.shouldBeInLoadingState(/submit/i);
+});
+
+test('should populate the form with initial data', () => {
+  const initialData = {
+    Name: 'Jane Doe',
+    Email: 'jane.doe@example.com',
+  };
+  const { page } = renderComponent({ initialData });
+
+  page.shouldDisplayData(initialData);
+});
+
+test('should show an error message if submission fails', () => {
+  const { page } = renderComponent({
+    error: 'The server returned an error.',
+  });
+
+  page.shouldShowError(/server returned an error/i);
+});
+```
+
+**Canonical Example:** For a complete implementation, refer to `RegistrationForm.component.test.tsx` and its corresponding Page Object in `src/__tests__/page-objects/registration-form.page.ts`.
+
+## 6. Test Structure (Arrange-Act-Assert)
+
+- **Standard:** All tests MUST follow the Arrange-Act-Assert (AAA) pattern for clarity and consistency.
+
+### 6.1. Stateless Component Test Structure
+
+For stateless components, tests focus on verifying the rendered output based on different prop combinations that simulate various application states.
+
+```typescript
+describe('Component Test: GenericForm', () => {
+  // 1. ARRANGE: Define default props and a render helper
+  const defaultProps = {
+    initialData: { name: '', email: '' },
+    isSubmitting: false,
+    error: null,
+    onSubmit: jest.fn(),
+    isEmailReadonly: false,
+  };
+
+  const renderComponent = (props = {}) => {
+    const mergedProps = { ...defaultProps, ...props };
+    // The Page Object is instantiated here for use in tests
+    return render(<GenericForm {...mergedProps} />, {
+      page: new GenericFormPage(),
+    });
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  // 2. ACT & ASSERT: Group tests by the behavior they verify
+  describe('When the form is submitting', () => {
+    test('should display a loading indicator', () => {
+      // Arrange: Simulate the "submitting" state
+      const { page } = renderComponent({ isSubmitting: true });
+
+      // Assert: Verify the observable outcome
+      page.shouldBeInLoadingState(/submit/i);
+    });
+  });
+
+  describe('When there is initial data', () => {
+    test('should populate the fields correctly', () => {
+      // Arrange: Simulate providing initial data
+      const initialData = { Name: 'Jane Doe', Email: 'jane.doe@example.com' };
+      const { page } = renderComponent({ initialData });
+
+      // Assert: Verify the data is displayed
+      page.shouldDisplayData(initialData);
+    });
+
+    test('should prevent editing of certain fields', () => {
+      // Arrange: Simulate a field that should be readonly
+      const { page } = renderComponent({ isEmailReadonly: true });
+
+      // Assert: Verify the field is disabled
+      expect(page.isFieldDisabled(/email/i)).toBe(true);
+    });
+  });
+
+  describe('When a submission fails', () => {
+    test('should display an error message', () => {
+      // Arrange: Simulate an error state
+      const { page } = renderComponent({ error: 'Invalid credentials' });
+
+      // Assert: Verify the error is shown
+      page.shouldShowError(/invalid credentials/i);
+    });
+  });
+});
+```
+
+### 6.2. Key Principles for Stateless Component Tests
+
+- **Behavior-Focused Descriptions:** Test names describe the user-facing scenario (e.g., "When the form is submitting"), not the underlying props.
+- **Arrange Props to Simulate Behavior:** The `Arrange` block sets up the component's props to create the specific scenario for the test.
+- **Assert on Observable Output:** The `Assert` block verifies the rendered UI using the Page Object, confirming the component behaves correctly in that state.
+- **Implicit Act Phase:** The "Act" is the component's rendering, which is triggered by the `renderComponent` call. There are typically no simulated user events in stateless component tests.
+
+## 7. What NOT to Test (Implementation Details)
+
+### 7.1. HTML Structure and Attributes
+
+- Input types, required attributes, CSS classes
+- **Rationale:** These are implementation details that should be handled by TypeScript, linting, and accessibility tools
+
+### 7.2. Framework-Specific Details
+
+- React lifecycle methods, hooks implementation
+- **Rationale:** These are React internals, not component behavior
+
+### 7.3. Props Interface Edge Cases
+
+- Handling missing props, default props behavior
+- **Rationale:** TypeScript provides compile-time safety for props interfaces
+
+### 7.4. Styling and Layout
+
+- CSS classes, inline styles, visual positioning
+- **Rationale:** Visual testing should be handled by visual regression tools
+
+## 8. Modern Test Pyramid Alignment
+
+This SOP directly implements the Modern Test Pyramid principles:
+
+- **Fast Developer Feedback:** Component tests run in < 2 seconds vs system tests (minutes/hours)
+- **Granular Error Detection:** Know exactly which component is broken
+- **Reduced Debugging Time:** No need to debug across system boundaries
+- **Component Isolation:** Frontend components tested independently of backend
+
+## 9. Test Categories and Examples
+
+### 9.1. Component State Rendering
+
+Tests in this category verify that the component correctly displays different UI states based on the context provided by its props.
+
+```typescript
+✅ "should display a loading indicator while an operation is in progress"
+✅ "should render correctly when in a disabled state"
+✅ "should show an empty state message when there is no data"
+✅ "should display all fields with their initial values"
+```
+
+### 9.2. Conditional Rendering
+
+These tests ensure that the component shows or hides elements correctly based on different scenarios.
+
+```typescript
+✅ "should show an error message when a submission fails"
+✅ "should hide validation errors when the form is valid"
+✅ "should display a success message after a successful operation"
+✅ "should render optional sections of the component when data is available"
+```
+
+### 9.3. Data Display and Formatting
+
+This category focuses on verifying that data passed to the component is displayed correctly to the user.
+
+```typescript
+✅ "should correctly populate the form with initial data"
+✅ "should display formatted dates and numbers according to locale"
+✅ "should correctly render a list of items"
+✅ "should handle and display empty or null data gracefully"
+```
+
+### 9.4. UI Behavior Based on State
+
+These tests confirm that the component's interactive elements behave correctly in different states, even for stateless components.
+
+```typescript
+✅ "should disable the submit button when the form is invalid"
+✅ "should prevent editing of a user's email"
+✅ "should highlight the currently selected item in a list"
+✅ "should apply specific styles for error states on form fields"
+```
+
+## 10. Forbidden Test Types
+
+The following test types are **EXPLICITLY FORBIDDEN** as they violate Modern Test Pyramid principles:
+
+### 10.1. Implementation Detail Testing
+
+```typescript
+❌ "should have proper input types"
+❌ "should have required attributes on form fields"
+❌ "should have correct CSS classes"
+❌ "should not require name field in login mode"
+❌ "should handle missing name prop gracefully"
+❌ "should work with minimal required props"
+❌ "should have proper ARIA labels"
+❌ "should match snapshot" (for structural testing)
+```
+
+### 10.2. Interaction Testing (Mock Call Verification)
+
+```typescript
+❌ expect(mockOnSubmit).toHaveBeenCalledTimes(1)
+❌ expect(mockOnChange).toHaveBeenCalledWith(expectedValue)
+❌ expect(mockCallback).not.toHaveBeenCalled()
+❌ expect(mockHandler).toHaveBeenCalledBefore(mockOtherHandler)
+❌ verify(mockService).wasCalledWith(parameters)
+❌ "should call onChange handler when field changes"
+❌ "should call onSubmit when form is submitted"
+❌ "should not call callback when disabled"
+```
+
+**Rationale:** These tests couple to implementation details and break when refactoring, even when user-facing behavior remains identical. Use state verification instead.
+
+## 11. Tools and Setup
+
+### 11.1. Required Dependencies
+
+- `@testing-library/react` - Component rendering and queries
+- `@testing-library/jest-dom` - Custom Jest matchers
+- `jest` - Test runner and mocking framework
+
+### 11.2. Prohibited Tools for Component Tests
+
+- `enzyme` - Encourages implementation detail testing
+- `react-test-renderer` - Too low-level for behavior testing
+- Direct DOM manipulation libraries
+
+## 12. Enforcement
+
+Violation of these standards will result in:
+
+1. Build failures during CI
+2. Rejection during code review
+3. Mandatory refactoring before merge
+
+These standards are **NON-NEGOTIABLE** to maintain fast developer feedback and prevent regression in test quality.
+
+## 13. Success Metrics
+
+Component tests following this SOP should achieve:
+
+- **Speed:** < 2 seconds total execution time
+- **Maintainability:** Tests rarely break during refactoring
+- **Clarity:** Test failures immediately indicate component behavior issues
