@@ -21,11 +21,14 @@ Write a Test Case that serves as an **Executable Specification** for the behavio
 ├─────────────────────────────────────────────────────────────┤
 │              DOMAIN SPECIFIC LANGUAGE (DSL)                 │
 ├─────────────────────────────────────────────────────────────┤
-│  Protocol Drivers  │  Protocol Drivers  │  External Stubs   │
+│  Protocol Drivers  │  Protocol Drivers  │  Scenarist Stubs  │
+│  (UI)              │  (API)             │  (External Systems)│
 ├─────────────────────────────────────────────────────────────┤
 │                   SYSTEM UNDER TEST (SUT)                   │
 └─────────────────────────────────────────────────────────────┘
 ```
+
+**External System Mocking**: We use [Scenarist](https://scenarist.io/) to stub external systems (payment gateways, email services, third-party APIs).
 
 ## The Litmus Test
 
@@ -148,6 +151,23 @@ await shopping.checkOut("item: CD Book", "price: £30.00", "card: 4111...");
 // Defaults when not
 await shopping.checkOut();
 ```
+
+## External System Assertions
+
+When your test needs to verify external system interactions (via Scenarist):
+
+```typescript
+// Verify payment was processed
+await shopping.assertPaymentProcessed("amount: £30.00");
+
+// Verify email was sent
+await notifications.assertEmailSent("to: customer@example.com", "subject: Order Confirmation");
+
+// Verify SMS notification
+await notifications.assertSmsSent("to: +1234567890");
+```
+
+These assertions verify calls made to Scenarist-mocked external services.
 
 ## Verification
 
