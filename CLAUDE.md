@@ -138,7 +138,7 @@ Based on the comprehensive testing strategy:
 | **Narrow Integration** | Test adapters with real infrastructure (DB, file system) | Medium | Adapter + real dependency |
 | **Component Tests** | Test use cases through HTTP interface | Medium | Full vertical slice |
 | **Contract Tests** | Consumer-driven contracts via Pact | Fast | API boundaries |
-| **Acceptance Tests** | Validate user behavior via Four-Layer BDD | Slow | Full system via UI/API |
+| **Acceptance Tests** | Executable Specifications via Four-Layer Model | Slow | Full system via UI/API |
 | **E2E Tests** | Critical user journeys end-to-end | Slowest | Multiple systems |
 | **Smoke Tests** | Production deployment validation | Fast | Health endpoints |
 
@@ -216,49 +216,62 @@ src/
 │       └── component/          # Component tests
 ```
 
-### 4. Four-Layer BDD Model (Dave Farley)
+### 4. Four-Layer Model (Dave Farley)
 
 System-level acceptance tests live in a separate repository: `<project>-system-tests`
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  LAYER 1: FEATURES (Gherkin)                                    │
-│  Business-readable scenarios                                     │
-│  Given-When-Then format                                          │
-│  acceptance/features/*.feature                                   │
+│  LAYER 1: TEST CASES (Executable Specifications)                │
+│  Written in problem-domain language                             │
+│  From perspective of external user                              │
+│  Focus on WHAT, not HOW                                         │
 ├─────────────────────────────────────────────────────────────────┤
-│  LAYER 2: STEP DEFINITIONS                                       │
-│  Maps Gherkin to DSL calls                                       │
-│  acceptance/step_definitions/*.steps.ts                          │
+│  LAYER 2: DOMAIN SPECIFIC LANGUAGE (DSL)                        │
+│  Shared between test cases                                      │
+│  Optional parameters for precision where needed                 │
+│  Domain concepts only - clean from HOW                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  LAYER 3: DSL (Domain-Specific Language)                         │
-│  High-level test operations                                      │
-│  Technology-agnostic                                             │
-│  acceptance/dsl/*.dsl.ts                                         │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────────┐       │
+│  │   Protocol   │  │   Protocol   │  │  External System │       │
+│  │    Driver    │  │    Driver    │  │      Stubs       │       │
+│  │    (UI)      │  │    (API)     │  │                  │       │
+│  └──────────────┘  └──────────────┘  └──────────────────┘       │
 ├─────────────────────────────────────────────────────────────────┤
-│  LAYER 4: DRIVERS                                                │
-│  Platform-specific implementations                               │
-│  Web (Playwright), API, Mobile                                   │
-│  acceptance/drivers/{interface,web,api}/*.ts                     │
+│                   SYSTEM UNDER TEST (SUT)                       │
+│  Deployed using same tools as production                        │
 └─────────────────────────────────────────────────────────────────┘
 ```
+
+**Key Principles**:
+- Test Cases should make sense to the least technical person who understands the domain
+- If you replaced the SUT completely, your tests should still make sense
+- Use `placeAnOrder()` not "click submit button" - domain language only
+- Make scenarios atomic - no shared test data between tests
 
 **System Tests Structure**:
 ```
 <project>-system-tests/
-├── acceptance/
-│   ├── features/           # Gherkin feature files
-│   ├── step_definitions/   # Cucumber step mappings
-│   ├── dsl/                # Domain-specific test language
-│   │   └── models/         # Test data models
-│   ├── drivers/
-│   │   ├── interface/      # Driver contracts
-│   │   └── web/            # Playwright implementations
-│   │       ├── pages/      # Page objects
-│   │       └── services/   # Test services
-│   └── support/
-│       ├── world.ts        # Cucumber world context
-│       └── hooks.ts        # Before/After hooks
+├── test-cases/             # Executable Specifications
+│   ├── shopping/
+│   │   └── buy-book.test.ts
+│   └── account/
+│       └── registration.test.ts
+├── dsl/                    # Domain Specific Language
+│   ├── shopping.dsl.ts
+│   ├── account.dsl.ts
+│   └── params.ts           # Parameter parsing utilities
+├── drivers/
+│   ├── interfaces/         # Driver contracts
+│   │   ├── shopping.driver.ts
+│   │   └── account.driver.ts
+│   ├── ui/                 # UI Protocol Drivers
+│   │   └── shopping-ui.driver.ts
+│   └── api/                # API Protocol Drivers
+│       └── shopping-api.driver.ts
+└── support/
+    ├── config.ts
+    └── hooks.ts
 ```
 
 ---
@@ -576,7 +589,7 @@ Each feature follows this strict order:
 
 - **Workflow Flowchart**: [docs/workflow-flowchart.md](docs/workflow-flowchart.md) - Visual guide to the complete development workflow
 - **Clean Architecture**: [reference/clean-architecture-reference/](reference/clean-architecture-reference/)
-- **Four-Layer BDD**: [reference/acceptance-test-reference/](reference/acceptance-test-reference/)
+- **Four-Layer Model**: [reference/acceptance-test-reference/](reference/acceptance-test-reference/)
 - **Rules Reference**: [reference/rules-reference/](reference/rules-reference/)
 - **Ways of Working**: [reference/wow-reference/](reference/wow-reference/)
 - **Test Strategy**: [reference/test-strategy-reference/](reference/test-strategy-reference/)
