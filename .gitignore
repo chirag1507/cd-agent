@@ -25,5 +25,4 @@ npm-debug.log*
 .env.*.local
 
 # Reference materials (internal only, not for distribution)
-# Uncomment the line below when publishing to npm
-# reference/
+reference/
