@@ -28,7 +28,7 @@ Write a Test Case that serves as an **Executable Specification** for the behavio
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**External System Mocking**: We use [Scenarist](https://scenarist.io/) to stub external systems (payment gateways, email services, third-party APIs).
+**External System Mocking**: We use [Scenarist](https://scenarist.io/) to stub external systems (payment gateways, email services, third-party APIs). Scenarios are defined as typed objects with `ScenarioId` enum and switched via `ScenaristService.switchToScenario()`.
 
 ## The Litmus Test
 
@@ -152,9 +152,39 @@ await shopping.checkOut("item: CD Book", "price: £30.00", "card: 4111...");
 await shopping.checkOut();
 ```
 
-## External System Assertions
+## External System Mocking with Scenarist
 
-When your test needs to verify external system interactions (via Scenarist):
+When your test involves external systems, the Protocol Driver switches Scenarist scenarios:
+
+```typescript
+// In Protocol Driver - switch scenario BEFORE triggering the flow
+await this.scenaristService.switchToScenario(githubOAuthSuccess);
+await this.signUpPage.authenticateWithGitHub();
+
+// For failure scenarios
+await this.scenaristService.switchToScenario(githubOAuthFailure);
+await this.signUpPage.continueWithGitHub();
+```
+
+### Scenario Definition Pattern
+
+```typescript
+// scenarios/github-oauth.scenarios.ts
+export const githubOAuthSuccess: ScenaristScenario = {
+  id: ScenarioId.GITHUB_OAUTH_SUCCESS,
+  name: 'GitHub OAuth - Success',
+  description: 'GitHub OAuth token exchange succeeds',
+  mocks: [
+    {
+      method: 'POST',
+      url: 'https://github.com/login/oauth/access_token',
+      response: { status: 200, body: { access_token: 'gho_mock_token' } },
+    },
+  ],
+};
+```
+
+### Asserting External System Calls
 
 ```typescript
 // Verify payment was processed
@@ -162,12 +192,9 @@ await shopping.assertPaymentProcessed("amount: £30.00");
 
 // Verify email was sent
 await notifications.assertEmailSent("to: customer@example.com", "subject: Order Confirmation");
-
-// Verify SMS notification
-await notifications.assertSmsSent("to: +1234567890");
 ```
 
-These assertions verify calls made to Scenarist-mocked external services.
+These assertions use `scenaristService.getCalls(scenarioId)` to verify external system interactions.
 
 ## Verification
 

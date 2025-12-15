@@ -239,81 +239,228 @@ We use [Scenarist](https://scenarist.io/) to mock external systems in acceptance
 - Message queues (test queue)
 - Internal services
 
-### Scenarist Setup
+### Scenarist Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     SCENARIST SETUP                              │
+├─────────────────────────────────────────────────────────────────┤
+│  scenarios/                                                      │
+│  ├── scenario-ids.enum.ts     # All scenario IDs                │
+│  └── github-oauth.scenarios.ts # Scenario definitions           │
+├─────────────────────────────────────────────────────────────────┤
+│  drivers/web/services/                                           │
+│  └── scenarist.service.ts     # Scenario switching service      │
+├─────────────────────────────────────────────────────────────────┤
+│  Protocol Drivers use ScenaristService to switch scenarios      │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Step 1: Define Scenario IDs
 
 ```typescript
-// support/scenarist.ts
-import { Scenarist } from "@scenarist/client";
-
-export const scenarist = new Scenarist({
-  baseUrl: process.env.SCENARIST_URL || "http://localhost:8080",
-});
-
-// Configure mock for external service
-export async function setupPaymentGatewayMock(): Promise<void> {
-  await scenarist.createScenario({
-    name: "successful-payment",
-    request: {
-      method: "POST",
-      path: "/api/payments",
-    },
-    response: {
-      status: 200,
-      body: {
-        transactionId: "txn-123",
-        status: "success",
-      },
-    },
-  });
+// scenarios/scenario-ids.enum.ts
+export enum ScenarioId {
+  DEFAULT = 'default',
+  GITHUB_OAUTH_SUCCESS = 'github-oauth-success',
+  GITHUB_OAUTH_FAILURE = 'github-oauth-failure',
+  GITHUB_OAUTH_TOKEN_EXCHANGE_FAIL = 'github-oauth-token-exchange-fail',
+  GITHUB_OAUTH_INVALID_TOKEN = 'github-oauth-invalid-token',
+  GITHUB_OAUTH_PROFILE_RETRIEVAL_FAIL = 'github-oauth-profile-retrieval-fail',
+  GITHUB_OAUTH_SERVICE_UNAVAILABLE = 'github-oauth-service-unavailable',
+  PAYMENT_SUCCESS = 'payment-success',
+  PAYMENT_DECLINED = 'payment-declined',
 }
 ```
 
-### Using Scenarist in Tests
+### Step 2: Define Scenarios
 
 ```typescript
-// In test setup (hooks.ts)
-import { scenarist, setupPaymentGatewayMock } from "./scenarist";
+// scenarios/github-oauth.scenarios.ts
+import { ScenarioId } from './scenario-ids.enum';
 
-Before(async function () {
-  await scenarist.reset(); // Clear all scenarios
-  await setupPaymentGatewayMock();
-});
+export interface ScenaristScenario {
+  id: ScenarioId;
+  name: string;
+  description: string;
+  mocks: ScenaristMock[];
+}
 
-After(async function () {
-  await scenarist.reset();
-});
+export interface ScenaristMock {
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  url: string;
+  response: {
+    status: number;
+    body: unknown;
+  };
+}
+
+export const githubOAuthSuccess: ScenaristScenario = {
+  id: ScenarioId.GITHUB_OAUTH_SUCCESS,
+  name: 'GitHub OAuth - Success',
+  description: 'GitHub OAuth token exchange and user profile retrieval succeed',
+  mocks: [
+    // Step 1: Exchange OAuth code for access token
+    {
+      method: 'POST',
+      url: 'https://github.com/login/oauth/access_token',
+      response: {
+        status: 200,
+        body: {
+          access_token: 'gho_mock_access_token_1234567890',
+          token_type: 'bearer',
+          scope: 'user:email',
+        },
+      },
+    },
+    // Step 2: Get user profile with access token
+    {
+      method: 'GET',
+      url: 'https://api.github.com/user',
+      response: {
+        status: 200,
+        body: {
+          id: 123456,
+          login: 'testuser',
+          email: 'testuser@example.com',
+          name: 'Test User',
+        },
+      },
+    },
+  ],
+};
+
+export const githubOAuthFailure: ScenaristScenario = {
+  id: ScenarioId.GITHUB_OAUTH_FAILURE,
+  name: 'GitHub OAuth - Failure',
+  description: 'GitHub OAuth flow fails completely',
+  mocks: [
+    {
+      method: 'POST',
+      url: 'https://github.com/login/oauth/access_token',
+      response: {
+        status: 401,
+        body: { error: 'bad_verification_code' },
+      },
+    },
+  ],
+};
 ```
 
-### Verifying External System Calls
+### Step 3: Create Scenarist Service
 
 ```typescript
-// In DSL or Driver
+// drivers/web/services/scenarist.service.ts
+import { ScenaristScenario } from '@scenarios/github-oauth.scenarios';
+
+export class ScenaristService {
+  constructor(
+    private readonly baseUrl: string = process.env.SCENARIST_URL || 'http://localhost:8080'
+  ) {}
+
+  async switchToScenario(scenario: ScenaristScenario): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/scenarios/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scenarioId: scenario.id,
+        mocks: scenario.mocks,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to switch to scenario ${scenario.id}: ${response.status}`);
+    }
+  }
+
+  async reset(): Promise<void> {
+    await fetch(`${this.baseUrl}/scenarios/reset`, { method: 'POST' });
+  }
+
+  async getCalls(scenarioId: string): Promise<RecordedCall[]> {
+    const response = await fetch(`${this.baseUrl}/scenarios/${scenarioId}/calls`);
+    return response.json();
+  }
+}
+```
+
+### Step 4: Use in Protocol Drivers
+
+```typescript
+// drivers/web/auth-web-driver.ts
+import { AuthDriver } from '../interface/auth-driver.interface';
+import { ScenaristService } from './services/scenarist.service';
+import { githubOAuthSuccess, githubOAuthFailure } from '@scenarios/github-oauth.scenarios';
+
+export class AuthWebDriver implements AuthDriver {
+  constructor(
+    private readonly page: Page,
+    private readonly scenaristService: ScenaristService
+  ) {}
+
+  async authenticate(email: string): Promise<boolean> {
+    // Switch to success scenario BEFORE triggering OAuth flow
+    await this.scenaristService.switchToScenario(githubOAuthSuccess);
+    return await this.signUpPage.authenticateWithGitHub();
+  }
+
+  async gitHubAuthenticationFailed(): Promise<void> {
+    // Switch to failure scenario
+    await this.scenaristService.switchToScenario(githubOAuthFailure);
+    await this.signUpPage.continueWithGitHub();
+  }
+}
+```
+
+### Step 5: Wire Up in World/Support
+
+```typescript
+// support/world.ts
+import { ScenaristService } from '@drivers/web/services/scenarist.service';
+
+export class CustomWorld extends World {
+  private scenaristService!: ScenaristService;
+
+  async init(): Promise<void> {
+    this.scenaristService = new ScenaristService();
+
+    // Inject into drivers
+    this.authDSL = new AuthDSL(
+      new AuthWebDriver(this.page, this.scenaristService)
+    );
+  }
+
+  async cleanup(): Promise<void> {
+    await this.scenaristService.reset();
+  }
+}
+```
+
+### Scenario Organization Pattern
+
+Group scenarios by external system:
+
+```
+scenarios/
+├── scenario-ids.enum.ts          # Central enum for all IDs
+├── github-oauth.scenarios.ts     # GitHub OAuth scenarios
+├── stripe-payment.scenarios.ts   # Stripe payment scenarios
+├── sendgrid-email.scenarios.ts   # SendGrid email scenarios
+└── index.ts                      # Re-exports all scenarios
+```
+
+### Asserting External System Interactions
+
+```typescript
+// In DSL
 async assertPaymentProcessed(amount: string): Promise<void> {
-  const calls = await scenarist.getCalls("successful-payment");
-  const paymentCall = calls.find(call =>
-    call.request.body.amount === amount
-  );
+  const calls = await this.scenaristService.getCalls(ScenarioId.PAYMENT_SUCCESS);
+  const paymentCall = calls.find(call => call.request.body.amount === amount);
 
   if (!paymentCall) {
     throw new Error(`No payment call found for amount ${amount}`);
   }
 }
-```
-
-### Environment Configuration
-
-```typescript
-// support/config.ts
-export const config = {
-  appUrl: process.env.APP_URL || "http://localhost:3000",
-  scenaristUrl: process.env.SCENARIST_URL || "http://localhost:8080",
-
-  // Point your app's external service URLs to Scenarist
-  externalServices: {
-    paymentGateway: process.env.PAYMENT_GATEWAY_URL || "http://localhost:8080/payment",
-    emailService: process.env.EMAIL_SERVICE_URL || "http://localhost:8080/email",
-  },
-};
 ```
 
 ## Growing the DSL

@@ -19,8 +19,8 @@ Implement Layer 3 of Dave Farley's Four-Layer Model - **Protocol Drivers** that 
 ├─────────────────────────────────────────────────────────────┤
 │              DOMAIN SPECIFIC LANGUAGE (DSL)                 │
 ├─────────────────────────────────────────────────────────────┤
-│  Protocol Drivers  │  Protocol Drivers  │  External Stubs   │  ◀── YOU ARE HERE
-│  (UI)              │  (API)             │                   │
+│  Protocol Drivers  │  Protocol Drivers  │  Scenarist Stubs  │  ◀── YOU ARE HERE
+│  (UI)              │  (API)             │  (External Sys)   │
 ├─────────────────────────────────────────────────────────────┤
 │                   SYSTEM UNDER TEST (SUT)                   │
 └─────────────────────────────────────────────────────────────┘
@@ -284,39 +284,128 @@ export class ShoppingAPIDriver implements ShoppingDriver {
 }
 ```
 
-## External System Stubs
+## External System Mocking with Scenarist
+
+Protocol Drivers use **Scenarist** to mock external systems. The driver switches scenarios BEFORE triggering actions that call external services.
+
+### Step 1: Define Scenarios
 
 ```typescript
-// drivers/stubs/payment-stub.driver.ts
-export class PaymentStubDriver {
-  private processedPayments: PaymentRecord[] = [];
+// scenarios/scenario-ids.enum.ts
+export enum ScenarioId {
+  GITHUB_OAUTH_SUCCESS = 'github-oauth-success',
+  GITHUB_OAUTH_FAILURE = 'github-oauth-failure',
+  PAYMENT_SUCCESS = 'payment-success',
+  PAYMENT_DECLINED = 'payment-declined',
+}
 
-  async processPayment(payment: PaymentRequest): Promise<PaymentResult> {
-    // Simulate payment processing
-    const record: PaymentRecord = {
-      id: `pay-${Date.now()}`,
-      amount: payment.amount,
-      cardLast4: payment.cardNumber.slice(-4),
-      status: "success",
-      timestamp: new Date()
-    };
+// scenarios/github-oauth.scenarios.ts
+export const githubOAuthSuccess: ScenaristScenario = {
+  id: ScenarioId.GITHUB_OAUTH_SUCCESS,
+  name: 'GitHub OAuth - Success',
+  description: 'GitHub OAuth flow succeeds',
+  mocks: [
+    {
+      method: 'POST',
+      url: 'https://github.com/login/oauth/access_token',
+      response: {
+        status: 200,
+        body: { access_token: 'gho_mock_token', token_type: 'bearer' },
+      },
+    },
+    {
+      method: 'GET',
+      url: 'https://api.github.com/user',
+      response: {
+        status: 200,
+        body: { id: 123456, login: 'testuser', email: 'test@example.com' },
+      },
+    },
+  ],
+};
+```
 
-    this.processedPayments.push(record);
+### Step 2: Create Scenarist Service
 
-    return {
-      success: true,
-      transactionId: record.id
-    };
+```typescript
+// drivers/web/services/scenarist.service.ts
+export class ScenaristService {
+  constructor(private readonly baseUrl: string = process.env.SCENARIST_URL) {}
+
+  async switchToScenario(scenario: ScenaristScenario): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/scenarios/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ scenarioId: scenario.id, mocks: scenario.mocks }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to switch to scenario ${scenario.id}`);
+    }
   }
 
-  async verifyPaymentProcessed(cardLast4: string): Promise<boolean> {
-    return this.processedPayments.some(p => p.cardLast4 === cardLast4);
+  async reset(): Promise<void> {
+    await fetch(`${this.baseUrl}/scenarios/reset`, { method: 'POST' });
   }
 
-  reset(): void {
-    this.processedPayments = [];
+  async getCalls(scenarioId: string): Promise<RecordedCall[]> {
+    const response = await fetch(`${this.baseUrl}/scenarios/${scenarioId}/calls`);
+    return response.json();
   }
 }
+```
+
+### Step 3: Use in Protocol Drivers
+
+```typescript
+// drivers/web/auth-web-driver.ts
+export class AuthWebDriver implements AuthDriver {
+  constructor(
+    private readonly page: Page,
+    private readonly scenaristService: ScenaristService
+  ) {}
+
+  async authenticate(email: string): Promise<boolean> {
+    // Switch scenario BEFORE triggering the flow
+    await this.scenaristService.switchToScenario(githubOAuthSuccess);
+    return await this.signUpPage.authenticateWithGitHub();
+  }
+
+  async gitHubAuthenticationFailed(): Promise<void> {
+    await this.scenaristService.switchToScenario(githubOAuthFailure);
+    await this.signUpPage.continueWithGitHub();
+  }
+}
+```
+
+### Step 4: Wire Up in World
+
+```typescript
+// support/world.ts
+export class CustomWorld extends World {
+  private scenaristService!: ScenaristService;
+
+  async init(): Promise<void> {
+    this.scenaristService = new ScenaristService();
+
+    this.authDSL = new AuthDSL(
+      new AuthWebDriver(this.page, this.scenaristService)
+    );
+  }
+
+  async cleanup(): Promise<void> {
+    await this.scenaristService.reset();
+  }
+}
+```
+
+### Scenario Organization
+
+```
+scenarios/
+├── scenario-ids.enum.ts          # Central enum for all IDs
+├── github-oauth.scenarios.ts     # GitHub OAuth scenarios
+├── stripe-payment.scenarios.ts   # Payment scenarios
+└── index.ts                      # Re-exports
 ```
 
 ## Driver Factory
@@ -357,7 +446,7 @@ Before running acceptance tests, confirm:
 - [ ] Interface defines all methods DSL needs
 - [ ] Driver mirrors DSL method signatures
 - [ ] All system knowledge is in driver (not DSL)
-- [ ] External system stubs are in place
+- [ ] Scenarist scenarios defined for external systems
 - [ ] Cleanup method resets state between tests
 
 ## Output
@@ -378,9 +467,9 @@ Methods Implemented:
   - checkOut(details)
   - ...
 
-External Stubs:
-  - [stub1] (if any)
-  - [stub2] (if any)
+Scenarist Scenarios:
+  - [scenario1] (e.g., githubOAuthSuccess)
+  - [scenario2] (e.g., paymentSuccess)
 
 Next step: Run acceptance tests to verify full flow
 ```
