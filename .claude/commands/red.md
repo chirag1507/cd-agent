@@ -45,6 +45,24 @@ You are in the **RED** phase of the TDD cycle. Your ONLY job is to write ONE fai
 
 ## Test Layer Selection
 
+If the layer is not clear from context, I will ask:
+
+```
+Which test layer are you implementing?
+
+1. Sociable Unit (BE) - Use Case behavior
+2. Sociable Unit (FE) - Use Case/hooks
+3. Component (BE) - HTTP vertical slice
+4. Component (FE) - React component behavior
+5. Narrow Integration (BE) - Repository with real DB
+6. Narrow Integration (FE) - Hooks with real Use Cases
+7. Contract (Consumer) - API client expectations
+8. Contract (Provider) - Verifying consumer contracts
+9. Acceptance - Business behavior E2E
+
+Enter number or layer name:
+```
+
 | Layer | When to Use | Rules File |
 |-------|-------------|------------|
 | **Sociable Unit** (BE) | Testing Use Case behavior | `rules/sociable-unit-test.md` |
@@ -57,7 +75,7 @@ You are in the **RED** phase of the TDD cycle. Your ONLY job is to write ONE fai
 | **Contract** (Provider) | Verifying consumer contracts | `rules/contract-test-provider.md` |
 | **Acceptance** | Testing business behavior E2E | `rules/acceptance-test.md` |
 
-**IMPORTANT**: Before writing a test, consult the appropriate rules file for that test type.
+**IMPORTANT**: Before writing a test, read and follow the rules in the appropriate rules file.
 
 ## Key Principles (Apply to ALL Test Types)
 
