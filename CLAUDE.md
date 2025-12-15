@@ -452,6 +452,9 @@ Each feature follows this strict order:
 |---------|-------|---------|
 | `/plan` | Discovery | Break feature into TDD-ready tasks |
 | `/spike` | Exploration | Technical exploration (disposable code) |
+| `/acceptance-test` | ATDD | Write Executable Specification (Test Case) |
+| `/dsl` | ATDD | Implement Domain Specific Language layer |
+| `/driver` | ATDD | Implement Protocol Driver layer |
 | `/red` | TDD | Write ONE failing test |
 | `/green` | TDD | Minimal implementation to pass |
 | `/refactor` | TDD | Improve structure (tests must be green) |
