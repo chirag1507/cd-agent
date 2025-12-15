@@ -154,7 +154,7 @@ await shopping.checkOut();
 
 ## External System Mocking with Scenarist
 
-When your test involves external systems, the Protocol Driver switches Scenarist scenarios:
+When your test involves external systems, the Protocol Driver switches Scenarist scenarios to control external system behavior. **Test assertions focus on what the USER sees, not on verifying external API calls.**
 
 ```typescript
 // In Protocol Driver - switch scenario BEFORE triggering the flow
@@ -166,35 +166,20 @@ await this.scenaristService.switchToScenario(githubOAuthFailure);
 await this.signUpPage.continueWithGitHub();
 ```
 
-### Scenario Definition Pattern
+### Assert User-Visible Outcomes (NOT External Calls)
 
 ```typescript
-// scenarios/github-oauth.scenarios.ts
-export const githubOAuthSuccess: ScenaristScenario = {
-  id: ScenarioId.GITHUB_OAUTH_SUCCESS,
-  name: 'GitHub OAuth - Success',
-  description: 'GitHub OAuth token exchange succeeds',
-  mocks: [
-    {
-      method: 'POST',
-      url: 'https://github.com/login/oauth/access_token',
-      response: { status: 200, body: { access_token: 'gho_mock_token' } },
-    },
-  ],
-};
+// GOOD: Assert what the user sees
+await shopping.assertOrderConfirmationDisplayed();
+await shopping.assertReceiptEmailReceived();  // Check user's inbox view
+await account.assertUserIsLoggedIn();
+
+// BAD: Don't couple tests to external system implementation
+// await shopping.assertPaymentProcessed("amount: £30.00");  // ❌
+// await notifications.assertEmailSent("to: ...");            // ❌
 ```
 
-### Asserting External System Calls
-
-```typescript
-// Verify payment was processed
-await shopping.assertPaymentProcessed("amount: £30.00");
-
-// Verify email was sent
-await notifications.assertEmailSent("to: customer@example.com", "subject: Order Confirmation");
-```
-
-These assertions use `scenaristService.getCalls(scenarioId)` to verify external system interactions.
+Scenarist controls **how external systems behave** (success/failure). Your tests assert **what the user experiences** as a result.
 
 ## Verification
 

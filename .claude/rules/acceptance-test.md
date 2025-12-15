@@ -376,11 +376,6 @@ export class ScenaristService {
   async reset(): Promise<void> {
     await fetch(`${this.baseUrl}/scenarios/reset`, { method: 'POST' });
   }
-
-  async getCalls(scenarioId: string): Promise<RecordedCall[]> {
-    const response = await fetch(`${this.baseUrl}/scenarios/${scenarioId}/calls`);
-    return response.json();
-  }
 }
 ```
 
@@ -449,19 +444,29 @@ scenarios/
 └── index.ts                      # Re-exports all scenarios
 ```
 
-### Asserting External System Interactions
+### Assertion Philosophy: User-Visible Outcomes
+
+**Do NOT assert on external system calls.** This couples tests to implementation details.
 
 ```typescript
-// In DSL
+// ❌ BAD: Coupling to external system implementation
 async assertPaymentProcessed(amount: string): Promise<void> {
   const calls = await this.scenaristService.getCalls(ScenarioId.PAYMENT_SUCCESS);
-  const paymentCall = calls.find(call => call.request.body.amount === amount);
+  // This tests HOW the system works, not WHAT the user sees
+}
 
-  if (!paymentCall) {
-    throw new Error(`No payment call found for amount ${amount}`);
-  }
+// ✅ GOOD: Assert what the user experiences
+async assertOrderConfirmationDisplayed(): Promise<void> {
+  await this.driver.verifyOrderConfirmationVisible();
+}
+
+async assertPaymentDeclinedMessageShown(): Promise<void> {
+  await this.driver.verifyErrorMessage("Payment declined");
 }
 ```
+
+**Scenarist's role**: Control external system behavior (success/failure scenarios)
+**Test's role**: Assert user-visible outcomes resulting from that behavior
 
 ## Growing the DSL
 

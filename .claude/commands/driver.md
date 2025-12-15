@@ -346,11 +346,6 @@ export class ScenaristService {
   async reset(): Promise<void> {
     await fetch(`${this.baseUrl}/scenarios/reset`, { method: 'POST' });
   }
-
-  async getCalls(scenarioId: string): Promise<RecordedCall[]> {
-    const response = await fetch(`${this.baseUrl}/scenarios/${scenarioId}/calls`);
-    return response.json();
-  }
 }
 ```
 
