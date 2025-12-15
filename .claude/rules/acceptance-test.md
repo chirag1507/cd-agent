@@ -220,14 +220,17 @@ export class ShoppingAPIDriver implements ShoppingDriver {
 }
 ```
 
-## External System Stubs
+## External System Stubs with Scenarist
 
-### What to Stub
+We use [Scenarist](https://scenarist.io/) to mock external systems in acceptance tests.
+
+### What to Stub (via Scenarist)
 
 - Email services (SendGrid, Mailgun)
 - Payment gateways (Stripe, PayPal)
 - Third-party APIs (OAuth, geocoding)
 - SMS/notifications (Twilio)
+- Any external HTTP dependencies
 
 ### What to Keep Real
 
@@ -236,20 +239,81 @@ export class ShoppingAPIDriver implements ShoppingDriver {
 - Message queues (test queue)
 - Internal services
 
-### Stub Verification via Test Support API
+### Scenarist Setup
 
 ```typescript
-// Application exposes test support endpoint
-app.get("/test-support/verify-email", (req, res) => {
-  const sent = TestEmailService.getInstance().wasEmailSentTo(req.query.email);
-  res.json({ sent });
+// support/scenarist.ts
+import { Scenarist } from "@scenarist/client";
+
+export const scenarist = new Scenarist({
+  baseUrl: process.env.SCENARIST_URL || "http://localhost:8080",
 });
 
-// Driver verifies through test support
-async verifyConfirmationEmail(email: string): Promise<boolean> {
-  const response = await this.httpClient.get(`/test-support/verify-email?email=${email}`);
-  return response.data.sent;
+// Configure mock for external service
+export async function setupPaymentGatewayMock(): Promise<void> {
+  await scenarist.createScenario({
+    name: "successful-payment",
+    request: {
+      method: "POST",
+      path: "/api/payments",
+    },
+    response: {
+      status: 200,
+      body: {
+        transactionId: "txn-123",
+        status: "success",
+      },
+    },
+  });
 }
+```
+
+### Using Scenarist in Tests
+
+```typescript
+// In test setup (hooks.ts)
+import { scenarist, setupPaymentGatewayMock } from "./scenarist";
+
+Before(async function () {
+  await scenarist.reset(); // Clear all scenarios
+  await setupPaymentGatewayMock();
+});
+
+After(async function () {
+  await scenarist.reset();
+});
+```
+
+### Verifying External System Calls
+
+```typescript
+// In DSL or Driver
+async assertPaymentProcessed(amount: string): Promise<void> {
+  const calls = await scenarist.getCalls("successful-payment");
+  const paymentCall = calls.find(call =>
+    call.request.body.amount === amount
+  );
+
+  if (!paymentCall) {
+    throw new Error(`No payment call found for amount ${amount}`);
+  }
+}
+```
+
+### Environment Configuration
+
+```typescript
+// support/config.ts
+export const config = {
+  appUrl: process.env.APP_URL || "http://localhost:3000",
+  scenaristUrl: process.env.SCENARIST_URL || "http://localhost:8080",
+
+  // Point your app's external service URLs to Scenarist
+  externalServices: {
+    paymentGateway: process.env.PAYMENT_GATEWAY_URL || "http://localhost:8080/payment",
+    emailService: process.env.EMAIL_SERVICE_URL || "http://localhost:8080/email",
+  },
+};
 ```
 
 ## Growing the DSL

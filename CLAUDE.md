@@ -282,6 +282,7 @@ System-level acceptance tests live in a separate repository: `<project>-system-t
 - **Runtime**: Node.js
 - **Testing**: Jest (unit/component/contract), Cucumber + Playwright (acceptance)
 - **Contract Testing**: Pact
+- **External System Mocking**: [Scenarist](https://scenarist.io/) (for acceptance tests)
 - **Package Manager**: pnpm
 - **Linting**: ESLint + Prettier
 
