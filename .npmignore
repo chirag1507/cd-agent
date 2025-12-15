@@ -1,0 +1,14 @@
+# Don't publish reference materials
+reference/
+
+# Don't publish docs folder (internal)
+docs/
+
+# Development files
+.git/
+.github/
+*.log
+
+# IDE
+.idea/
+.vscode/
