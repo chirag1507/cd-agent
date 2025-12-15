@@ -24,14 +24,18 @@
   "bugs": {
     "url": "https://github.com/chirag1507/cd-agent/issues"
   },
+  "bin": {
+    "cd-agent": "./bin/cli.js"
+  },
   "files": [
+    "bin/**/*",
     ".claude/commands/**/*",
     ".claude/rules/**/*",
     "CLAUDE.md",
     "README.md"
   ],
   "scripts": {
-    "install-commands": "cp -r .claude/commands $INIT_CWD/.claude/ && cp -r .claude/rules $INIT_CWD/.claude/ && echo 'Commands and rules copied to .claude/'"
+    "test": "echo 'No tests yet'"
   },
   "engines": {
     "node": ">=18.0.0"

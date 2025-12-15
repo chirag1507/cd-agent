@@ -15,66 +15,67 @@ CD-Agent is a set of Claude Code slash commands and rules that enforce disciplin
 
 ## Quick Start
 
-### 1. Install Commands in Your Project
+### Option 1: npx (Recommended)
+
+```bash
+# Navigate to your project
+cd my-project
+
+# Install CD-Agent commands and rules
+npx @avesta/cd-agent init
+
+# Also copy CLAUDE.md template
+npx @avesta/cd-agent init --with-claude-md
+```
+
+### Option 2: Git Clone
 
 ```bash
 # Clone cd-agent
 git clone https://github.com/chirag1507/cd-agent.git
 
-# Copy commands and rules to your project
-cp -r cd-agent/.claude/commands your-project/.claude/
-cp -r cd-agent/.claude/rules your-project/.claude/
+# Copy to your project
+cp -r cd-agent/.claude your-project/
+cp cd-agent/CLAUDE.md your-project/
 ```
 
-### 2. Create Your CLAUDE.md
+### After Installation
 
-Copy and customize the template for your project:
+1. **Customize CLAUDE.md** for your project:
+   - Tech stack (framework, database, etc.)
+   - Domain concepts and bounded contexts
+   - Team conventions
 
-```bash
-cp cd-agent/CLAUDE.md your-project/CLAUDE.md
-```
+2. **Initialize project structure** (or use `/init` command in Claude):
+   ```bash
+   pnpm init
+   pnpm add -D typescript jest ts-jest @types/jest
+   pnpm add -D eslint prettier
+   pnpm add -D @pact-foundation/pact  # For contract tests
+   ```
 
-Edit `CLAUDE.md` to add your project-specific:
-- Tech stack (framework, database, etc.)
-- Domain concepts and bounded contexts
-- Team conventions
+3. **Start building with TDD**:
+   ```bash
+   # Plan your first feature
+   /plan implement user registration
 
-### 3. Initialize Project Structure
+   # Write your first test
+   /red user can register with email and password
 
-Set up your TypeScript project with testing:
+   # Make it pass
+   /green
 
-```bash
-cd your-project
-
-# Initialize package.json
-pnpm init
-
-# Install dependencies
-pnpm add -D typescript jest ts-jest @types/jest
-pnpm add -D eslint prettier
-pnpm add -D @pact-foundation/pact  # For contract tests
-
-# Initialize TypeScript
-npx tsc --init
-```
-
-### 4. Start Building
-
-```bash
-# Plan your first feature
-/plan implement user registration
-
-# Write your first test (TDD)
-/red user can register with email and password
-
-# Make it pass
-/green
-
-# Improve the code
-/refactor
-```
+   # Improve the code
+   /refactor
+   ```
 
 ## Available Commands
+
+### Setup
+
+| Command | Purpose |
+|---------|---------|
+| `/init [type]` | Initialize project structure (backend/frontend/fullstack/system-tests) |
 
 ### Discovery & Planning
 
