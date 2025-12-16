@@ -497,32 +497,39 @@ Each feature follows this strict order:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ 0. UNDERSTAND                                                            │
-│    ├── Review User Story Map                                             │
-│    └── Behavioral Analysis (document ALL variants)                       │
-│         └── GATE: Human approval required before implementation          │
+│ 0. VISION & STRATEGY (/vision)                                           │
+│    ├── Define product vision (Problem, Users, Value Prop)                │
+│    ├── Set success metrics (DORA + Business + User)                      │
+│    ├── Identify constraints and scope boundaries                         │
+│    └── GATE: Vision documented in PRODUCT-VISION.md                      │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ 1. SYSTEM TEST DEFINITION                                                │
+│ 1. UNDERSTAND (/plan)                                                    │
+│    ├── Review User Story Map                                             │
+│    ├── Behavioral Analysis (document ALL variants)                       │
+│    ├── Ensure alignment with product vision                              │
+│    └── GATE: Human approval required before implementation               │
+├─────────────────────────────────────────────────────────────────────────┤
+│ 2. SYSTEM TEST DEFINITION                                                │
 │    ├── Create Gherkin feature file                                       │
 │    ├── Implement DSL layer and models                                    │
 │    └── GATE: Feature + DSL approved                                      │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ 2. BACKEND IMPLEMENTATION (with TDD)                                     │
+│ 3. BACKEND IMPLEMENTATION (with TDD)                                     │
 │    ├── Sociable Unit Tests → Use Case                                    │
 │    ├── Narrow Integration Tests → Repository                             │
 │    ├── Component Tests → Full vertical slice                             │
 │    └── GATE: Backend reviewed                                            │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ 3. FRONTEND IMPLEMENTATION (with TDD)                                    │
+│ 4. FRONTEND IMPLEMENTATION (with TDD)                                    │
 │    ├── Component Tests → UI Components                                   │
 │    ├── Contract Tests → API boundaries                                   │
 │    └── GATE: Frontend reviewed                                           │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ 4. CONTRACT TESTING                                                      │
+│ 5. CONTRACT TESTING                                                      │
 │    ├── Provider verification in backend                                  │
 │    └── GATE: Contracts verified                                          │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ 5. SYSTEM TEST IMPLEMENTATION                                            │
+│ 6. SYSTEM TEST IMPLEMENTATION                                            │
 │    ├── Step definitions                                                  │
 │    ├── Page objects and drivers                                          │
 │    └── GATE: System tests pass                                           │
@@ -533,6 +540,7 @@ Each feature follows this strict order:
 
 | Command | Phase | Purpose |
 |---------|-------|---------|
+| `/vision` | Strategy | Define product vision and goals |
 | `/plan` | Discovery | Break feature into TDD-ready tasks |
 | `/spike` | Exploration | Technical exploration (disposable code) |
 | `/acceptance-test` | ATDD | Write Executable Specification (Test Case) |

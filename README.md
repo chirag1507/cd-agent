@@ -54,8 +54,11 @@ cp cd-agent/CLAUDE.md your-project/
    pnpm add -D @pact-foundation/pact  # For contract tests
    ```
 
-3. **Start building with TDD**:
+3. **Start building with product vision**:
    ```bash
+   # Define product vision first
+   /vision
+
    # Plan your first feature
    /plan implement user registration
 
@@ -81,6 +84,7 @@ cp cd-agent/CLAUDE.md your-project/
 
 | Command | Purpose |
 |---------|---------|
+| `/vision` | Define product vision, goals, and success metrics |
 | `/plan <feature>` | Break feature into TDD-ready tasks using Example Mapping |
 | `/spike <question>` | Technical exploration (disposable code) |
 
@@ -169,16 +173,19 @@ External systems are mocked with [Scenarist](https://scenarist.io/).
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  1. PLAN                                                      │
+│  1. VISION                                                    │
+│     /vision → Define problem, users, goals, metrics           │
+├──────────────────────────────────────────────────────────────┤
+│  2. PLAN                                                      │
 │     /plan <feature> → Example Mapping → TDD-ready tasks       │
 ├──────────────────────────────────────────────────────────────┤
-│  2. ACCEPTANCE TEST (Outside-In)                              │
+│  3. ACCEPTANCE TEST (Outside-In)                              │
 │     /acceptance-test → /dsl → /driver                         │
 ├──────────────────────────────────────────────────────────────┤
-│  3. TDD (Inside-Out Implementation)                           │
+│  4. TDD (Inside-Out Implementation)                           │
 │     /red → /green → /refactor (repeat)                        │
 ├──────────────────────────────────────────────────────────────┤
-│  4. SHIP                                                      │
+│  5. SHIP                                                      │
 │     /commit → /ship                                           │
 └──────────────────────────────────────────────────────────────┘
 ```
