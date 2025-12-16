@@ -57,6 +57,41 @@ src/
 │       └── component/
 ```
 
+**For Frontend (Next.js + Clean Architecture + Atomic Design):**
+```
+src/
+├── app/                           # Next.js App Router
+│   ├── layout.tsx
+│   ├── page.tsx
+│   └── <route>/page.tsx
+├── features/                      # Feature modules (Bounded Contexts)
+│   └── <feature>/
+│       ├── application/
+│       │   └── usecases/          # Business logic (no React)
+│       ├── components/            # Feature-specific UI
+│       ├── constants/
+│       ├── hooks/                 # Custom React hooks
+│       ├── interfaces/            # Repository ports
+│       ├── mappers/               # Domain → Presentation
+│       ├── repositories/          # Repository adapters
+│       ├── types/                 # Domain types
+│       └── utils/
+└── shared/
+    ├── components/
+    │   ├── atoms/                 # Basic building blocks
+    │   ├── molecules/             # Composed atoms
+    │   ├── organisms/             # Complex sections
+    │   ├── templates/             # Page layouts
+    │   └── shadcn/                # shadcn/ui components
+    ├── config/                    # Environment configs
+    ├── hooks/                     # Shared hooks
+    ├── interfaces/                # Service interfaces
+    ├── lib/                       # Utilities (cn helper)
+    ├── providers/                 # React Context (DI)
+    ├── services/                  # Service adapters
+    └── types/
+```
+
 **For System Tests:**
 ```
 acceptance/
@@ -106,13 +141,28 @@ pnpm add -D prettier eslint-config-prettier
 pnpm add -D supertest @types/supertest
 ```
 
-**Frontend:**
+**Frontend (Next.js + shadcn/ui + Tailwind):**
 ```bash
-pnpm add react react-dom next
-pnpm add -D typescript @types/react @types/node
-pnpm add -D jest @testing-library/react @testing-library/jest-dom
+# Create Next.js app with TypeScript
+pnpm create next-app@latest . --typescript --tailwind --eslint --app --src-dir
+
+# Testing
+pnpm add -D jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
+pnpm add -D @types/jest ts-jest
+
+# Contract testing
 pnpm add -D @pact-foundation/pact
-pnpm add -D eslint eslint-config-next prettier
+
+# shadcn/ui setup
+pnpm add tailwindcss-animate class-variance-authority clsx tailwind-merge
+pnpm add lucide-react
+pnpm dlx shadcn@latest init
+
+# Add common shadcn components
+pnpm dlx shadcn@latest add button card input
+
+# Formatting
+pnpm add -D prettier eslint-config-prettier
 ```
 
 **System Tests:**
@@ -156,7 +206,7 @@ pnpm add -D typescript ts-node @types/node
 }
 ```
 
-**jest.config.js:**
+**jest.config.js (Backend):**
 ```javascript
 module.exports = {
   preset: 'ts-jest',
@@ -182,6 +232,57 @@ module.exports = {
     },
   },
 };
+```
+
+**jest.config.js (Frontend):**
+```javascript
+const nextJest = require('next/jest');
+
+const createJestConfig = nextJest({
+  dir: './',
+});
+
+const customJestConfig = {
+  setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
+  testEnvironment: 'jest-environment-jsdom',
+  moduleNameMapper: {
+    '^@/(.*)$': '<rootDir>/src/$1',
+  },
+  testMatch: ['**/*.test.ts', '**/*.test.tsx'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.test.{ts,tsx}',
+    '!src/**/*.types.ts',
+  ],
+};
+
+module.exports = createJestConfig(customJestConfig);
+```
+
+**jest.setup.ts (Frontend):**
+```typescript
+import '@testing-library/jest-dom';
+
+// Mock Next.js router
+jest.mock('next/navigation', () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => '/',
+}));
+```
+
+**src/shared/lib/utils.ts (Frontend - cn helper):**
+```typescript
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 ```
 
 **.eslintrc.js:**

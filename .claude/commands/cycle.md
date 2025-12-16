@@ -30,10 +30,22 @@ Skip: Acceptance (UI), Frontend Component
 Include: Sociable Unit → Narrow Integration → Component (API) → Contract (Provider)
 ```
 
-**Frontend Feature:**
+**Frontend Feature (Full):**
 ```
 Skip: Backend layers
-Include: Sociable Unit (FE) → Component (FE) → Contract (Consumer)
+Include: Use Case → Mapper → Hook → Component → Contract (Consumer)
+```
+
+**Frontend Feature (Component Only):**
+```
+Skip: Use Case, Repository, Contract
+Include: Mapper → Hook → Component (RTL)
+```
+
+**Frontend Component (Atomic Design):**
+```
+Skip: Use Case, Hook, Contract
+Include: Atom/Molecule/Organism Component Test (RTL)
 ```
 
 **API Only:**
@@ -61,10 +73,12 @@ Which layers do you want to include?
 
 1. Full Stack (all layers)
 2. Backend Only (Unit → Integration → Component → Contract Provider)
-3. Frontend Only (Unit → Component → Contract Consumer)
-4. API Only (Unit → Integration → Component)
-5. Minimal (Unit → Component only)
-6. Custom (specify layers)
+3. Frontend Full (Use Case → Mapper → Hook → Component → Contract Consumer)
+4. Frontend Component (Mapper → Hook → Component)
+5. Frontend UI Only (Atom/Molecule/Organism RTL tests)
+6. API Only (Unit → Integration → Component)
+7. Minimal (Unit → Component only)
+8. Custom (specify layers)
 
 Enter choice or specify custom layers to skip:
 ```
@@ -152,13 +166,65 @@ Each layer has specific rules to follow:
 | Layer | Rules File | Key Principle |
 |-------|------------|---------------|
 | Sociable Unit (BE) | `rules/sociable-unit-test.md` | State over interaction verification |
-| Sociable Unit (FE) | `rules/sociable-unit-test-fe.md` | Real domain, stubbed boundaries |
+| Use Case (FE) | `rules/component-test-fe.md` | Pure class, no React, mock deps |
+| Mapper (FE) | `rules/component-test-fe.md` | Pure functions, no mocks needed |
+| Hook (FE) | `rules/component-test-fe.md` | renderHook, waitFor, async states |
+| Component (FE) | `rules/component-test-fe.md` | RTL, Page Objects, behavior focus |
 | Narrow Integration | `rules/narrow-integration-test.md` | Real DB, test implementation |
 | Component (BE) | `rules/component-test-be.md` | HTTP interface, mocked dependencies |
-| Component (FE) | `rules/component-test-fe.md` | Page Objects, behavior focus |
 | Contract (Consumer) | `rules/contract-test-consumer.md` | Pact matchers, optional params |
 | Contract (Provider) | `rules/contract-test-provider.md` | State handlers, black-box |
 | Acceptance | `rules/acceptance-test.md` | Four-Layer Model, domain language |
+
+## Frontend Layer Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                    FRONTEND TDD LAYERS                                   │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ LAYER 1: USE CASE TEST                                           │   │
+│  │ Pure TypeScript class - no React imports                         │   │
+│  │ Test: Jest with mocked repositories/services                     │   │
+│  │ File: features/<feature>/application/usecases/*.test.ts          │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                │                                         │
+│                                ▼                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ LAYER 2: MAPPER TEST                                             │   │
+│  │ Static pure functions - domain → presentation                    │   │
+│  │ Test: Jest, no mocks needed                                      │   │
+│  │ File: features/<feature>/mappers/*.test.ts                       │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                │                                         │
+│                                ▼                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ LAYER 3: HOOK TEST                                               │   │
+│  │ Custom hooks with injected use cases                             │   │
+│  │ Test: renderHook, waitFor, test loading/error/success states     │   │
+│  │ File: features/<feature>/hooks/*.test.ts                         │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                │                                         │
+│                                ▼                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ LAYER 4: COMPONENT TEST (RTL)                                    │   │
+│  │ Atoms/Molecules/Organisms with Atomic Design                     │   │
+│  │ Test: RTL, userEvent, Page Objects, behavior-focused             │   │
+│  │ File: shared/components/**/*.test.tsx                            │   │
+│  │       features/<feature>/components/*.test.tsx                   │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                │                                         │
+│                                ▼                                         │
+│  ┌──────────────────────────────────────────────────────────────────┐   │
+│  │ LAYER 5: CONTRACT TEST (Consumer)                                │   │
+│  │ Pact consumer tests for API boundaries                           │   │
+│  │ Test: Pact.js, define expectations                               │   │
+│  │ [Skip if: no API boundary]                                       │   │
+│  └──────────────────────────────────────────────────────────────────┘   │
+│                                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
+```
 
 ## Output Format
 

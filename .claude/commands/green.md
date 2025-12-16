@@ -100,7 +100,7 @@ function add(a: number, b: number): number {
 
 When implementing, respect layer boundaries:
 
-### Use Case Implementation
+### Backend Use Case Implementation
 ```typescript
 export class RegisterUserUseCase {
   constructor(
@@ -122,7 +122,7 @@ export class RegisterUserUseCase {
 }
 ```
 
-### Domain Entity
+### Backend Domain Entity
 ```typescript
 export class User {
   private constructor(
@@ -135,6 +135,81 @@ export class User {
     return new User(props.email, props.password);
   }
 }
+```
+
+## Frontend Implementation Patterns
+
+### Frontend Use Case
+```typescript
+// features/<feature>/application/usecases/authenticate.use-case.ts
+export class AuthenticateUseCase {
+  constructor(
+    private readonly authRepository: AuthenticationRepository,
+    private readonly navigationService: NavigationClient
+  ) {}
+
+  async execute(): Promise<void> {
+    // ONLY what the test requires - no extra error handling
+    const { url } = await this.authRepository.authenticate();
+    this.navigationService.navigateTo(url);
+  }
+}
+```
+
+### Frontend Mapper
+```typescript
+// features/<feature>/mappers/chart-data.mapper.ts
+export class ChartDataMapper {
+  static toChartData(metrics: Metric[]): ChartData {
+    // ONLY the transformation the test requires
+    return {
+      labels: metrics.map(m => m.date),
+      data: metrics.map(m => m.value),
+    };
+  }
+}
+```
+
+### Frontend Custom Hook
+```typescript
+// features/<feature>/hooks/useCategories.ts
+export const useCategories = ({ projectId, useCase }: Dependencies) => {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!projectId) return;
+    setIsLoading(true);
+    useCase.execute(projectId)
+      .then(setCategories)
+      .finally(() => setIsLoading(false));
+  }, [projectId]);
+
+  return { categories, isLoading };
+};
+```
+
+### Frontend Component (Atom/Molecule)
+```typescript
+// shared/components/atoms/Typography/Typography.tsx
+export const Typography = ({ variant = 'body', children, className }: Props) => {
+  // ONLY what the test requires
+  return <p className={cn(variantStyles[variant], className)}>{children}</p>;
+};
+```
+
+### Frontend Component (Organism)
+```typescript
+// features/<feature>/components/AuthForm.tsx
+export const AuthForm = ({ onSubmit, loading }: Props) => {
+  return (
+    <Card>
+      <Button onClick={onSubmit} disabled={loading}>
+        {loading ? 'Signing in...' : 'Sign In'}
+      </Button>
+    </Card>
+  );
+};
 ```
 
 ## Process

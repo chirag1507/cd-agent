@@ -216,6 +216,61 @@ src/
 │       └── component/          # Component tests
 ```
 
+### 3b. Clean Architecture (Frontend)
+
+Frontend follows the same principles with React/Next.js adaptations:
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      PRESENTATION                                 │
+│  Pages (app/), Feature Components, Custom Hooks                  │
+├──────────────────────────────────────────────────────────────────┤
+│                      APPLICATION                                  │
+│  Use Cases (pure TypeScript, no React)                           │
+├──────────────────────────────────────────────────────────────────┤
+│                      DOMAIN                                       │
+│  Types, Interfaces (Ports), Mappers, Constants                   │
+├──────────────────────────────────────────────────────────────────┤
+│                      INFRASTRUCTURE                               │
+│  Repositories (Adapters), Services (Http, Storage, Navigation)   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+**Frontend Project Structure**:
+```
+src/
+├── app/                           # Next.js App Router
+│   ├── layout.tsx
+│   └── <route>/page.tsx
+├── features/                      # Feature modules (Bounded Contexts)
+│   └── <feature>/
+│       ├── application/usecases/  # Business logic (NO React imports)
+│       ├── components/            # Feature-specific UI
+│       ├── hooks/                 # Custom React hooks
+│       ├── interfaces/            # Repository ports
+│       ├── mappers/               # Domain → Presentation
+│       ├── repositories/          # Repository adapters
+│       └── types/                 # Domain types
+└── shared/
+    ├── components/
+    │   ├── atoms/                 # Basic building blocks (Button, Input)
+    │   ├── molecules/             # Composed atoms (SearchBar, IconButton)
+    │   ├── organisms/             # Complex sections (AuthForm, Navbar)
+    │   ├── templates/             # Page layouts
+    │   └── shadcn/                # shadcn/ui components
+    ├── interfaces/                # Service interfaces (HttpClient, etc.)
+    ├── providers/                 # React Context (Dependency Injection)
+    ├── services/                  # Service adapters
+    └── lib/utils.ts               # Tailwind cn() helper
+```
+
+**Key Frontend Rules**:
+- **Use Cases**: Pure TypeScript, NO React imports, constructor injection
+- **Mappers**: Static methods, pure functions, domain → presentation
+- **Hooks**: Coordinate use cases + React state, inject dependencies
+- **Components**: Thin presentation, delegate logic to hooks
+- **Atomic Design**: atoms → molecules → organisms → templates
+
 ### 4. Four-Layer Model (Dave Farley)
 
 System-level acceptance tests live in a separate repository: `<project>-system-tests`
@@ -278,13 +333,27 @@ System-level acceptance tests live in a separate repository: `<project>-system-t
 
 ## Technical Stack
 
+### Backend
 - **Language**: TypeScript
 - **Runtime**: Node.js
-- **Testing**: Jest (unit/component/contract), Cucumber + Playwright (acceptance)
-- **Contract Testing**: Pact
-- **External System Mocking**: [Scenarist](https://scenarist.io/) (for acceptance tests)
+- **Framework**: Express
+- **Testing**: Jest (unit/component/contract), Supertest
+- **Contract Testing**: Pact (Provider)
+
+### Frontend
+- **Language**: TypeScript
+- **Framework**: Next.js (App Router)
+- **UI Library**: shadcn/ui + Radix UI
+- **Styling**: Tailwind CSS
+- **Testing**: Jest + React Testing Library
+- **Contract Testing**: Pact (Consumer)
+- **Architecture**: Clean Architecture + Atomic Design
+
+### Shared
 - **Package Manager**: pnpm
 - **Linting**: ESLint + Prettier
+- **Acceptance Testing**: Cucumber + Playwright
+- **External System Mocking**: [Scenarist](https://scenarist.io/)
 
 ---
 
@@ -605,10 +674,13 @@ Each feature follows this strict order:
 - [x] Tech stack chosen (TypeScript, Jest, Pact)
 - [x] Testing strategy documented
 - [x] Ways of Working integrated
-- [x] Commands installed (12 commands in .claude/commands/)
-- [x] Test rules installed (11 rules in .claude/rules/)
+- [x] Commands installed (13 commands in .claude/commands/)
+- [x] Test rules installed (13 rules in .claude/rules/)
 - [x] Four-Layer Model with Scenarist integration
 - [x] npm package structure (package.json)
 - [x] User documentation (README.md)
+- [x] Frontend Clean Architecture patterns
+- [x] Atomic Design with shadcn/ui + Tailwind
+- [x] React Testing Library patterns
 - [ ] First feature implemented with TDD
 - [ ] JIRA MCP integration (Phase 2)

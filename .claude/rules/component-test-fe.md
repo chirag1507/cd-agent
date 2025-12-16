@@ -1,10 +1,10 @@
 # Component Tests (Frontend)
 
-> Apply when writing tests for React components to verify behavior, not implementation.
+> **Trigger**: Creating or modifying `*.test.tsx` files in frontend code
 
 ## Purpose
 
-Test component behavior from a user's perspective with fast, focused tests that provide immediate feedback.
+Test component behavior from a user's perspective with fast, focused tests that provide immediate feedback. We use **React Testing Library (RTL)** with **Jest**.
 
 ## Non-Negotiable Rules
 
@@ -24,17 +24,18 @@ expect(screen.getByRole("button", { name: /submit/i })).toBeDisabled();
 
 ```typescript
 // BAD: Prop-focused names
-"should display loading state when isLoading prop is true"
-"should disable button when disabled prop is true"
+"should display loading state when isLoading prop is true";
+"should disable button when disabled prop is true";
 
 // GOOD: Behavior-focused names
-"should display a loading indicator while an operation is in progress"
-"should disable the submit button when the form is invalid"
+"should display a loading indicator while an operation is in progress";
+"should disable the submit button when the form is invalid";
 ```
 
 ### 3. Query by User-Facing Attributes
 
 **Priority order:**
+
 1. `getByRole` - Accessible roles
 2. `getByLabelText` - Form labels
 3. `getByText` - Visible text
@@ -73,6 +74,7 @@ it("should display a loading indicator while submitting", () => {
 ### 5. Stateless vs Stateful Testing
 
 **Stateless Components (Props-Driven):**
+
 ```typescript
 // Test how props affect rendered output
 it("should populate fields with initial data", () => {
@@ -85,6 +87,7 @@ it("should populate fields with initial data", () => {
 ```
 
 **Stateful Components:**
+
 ```typescript
 // Test state changes from user interactions
 it("should handle form submission", async () => {
@@ -137,7 +140,7 @@ describe("Component Test: RegistrationForm", () => {
   describe("When populated with initial data", () => {
     it("should display the initial values", () => {
       const { page } = renderComponent({
-        name: { value: "John Doe", onChange: jest.fn() }
+        name: { value: "John Doe", onChange: jest.fn() },
       });
       expect(page.nameField).toHaveValue("John Doe");
     });
@@ -149,11 +152,11 @@ describe("Component Test: RegistrationForm", () => {
 
 ```typescript
 // FORBIDDEN: Implementation detail testing
-"should have proper input types"
-"should have required attributes"
-"should have correct CSS classes"
-"should have proper ARIA labels"
-"should match snapshot" // for structural testing
+"should have proper input types";
+"should have required attributes";
+"should have correct CSS classes";
+"should have proper ARIA labels";
+"should match snapshot"; // for structural testing
 
 // FORBIDDEN: Interaction verification
 expect(mockOnSubmit).toHaveBeenCalledTimes(1);
@@ -175,10 +178,115 @@ expect(mockOnChange).toHaveBeenCalledWith(expectedValue);
 
 ## File Naming
 
-`<ComponentName>.component.test.tsx`
+`<ComponentName>.test.tsx` (co-located with component)
 
-Example: `RegistrationForm.component.test.tsx`
+Example: `RegistrationForm.test.tsx`
 
 ## Page Object Location
 
 `src/__tests__/page-objects/<component-name>.page.ts`
+
+---
+
+### Hook Tests
+
+**Location**: `features/<feature>/hooks/*.test.ts`
+
+Use `renderHook` from RTL to test custom hooks.
+
+```typescript
+// useGetCategories.test.ts
+import { renderHook, waitFor } from "@testing-library/react";
+import { useGetCategories } from "./useGetCategories";
+
+describe("useGetCategories", () => {
+  const mockUseCase = { execute: jest.fn() };
+
+  beforeEach(() => jest.clearAllMocks());
+
+  it("fetches categories on mount when projectId is provided", async () => {
+    const categories = [{ id: "1", name: "Security" }];
+    mockUseCase.execute.mockResolvedValue(categories);
+
+    const { result } = renderHook(() =>
+      useGetCategories({
+        projectId: "project-123",
+        getCategoryHealthScoreUseCase: mockUseCase,
+      })
+    );
+
+    expect(result.current.isLoading).toBe(true);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.categories).toEqual(categories);
+  });
+
+  it("sets error state when fetch fails", async () => {
+    mockUseCase.execute.mockRejectedValue(new Error("Network error"));
+
+    const { result } = renderHook(() =>
+      useGetCategories({
+        projectId: "project-123",
+        getCategoryHealthScoreUseCase: mockUseCase,
+      })
+    );
+
+    await waitFor(() => {
+      expect(result.current.error).toBe("Network error");
+    });
+  });
+});
+```
+
+## Mocking Dependencies Context
+
+```typescript
+// Test utility for pages that use AppDependencies
+const createMockDependencies = (overrides = {}) => ({
+  httpClient: { get: jest.fn(), post: jest.fn() },
+  configService: { getApiPath: jest.fn() },
+  authUseCase: { execute: jest.fn() },
+  ...overrides,
+});
+
+const renderWithDependencies = (ui: React.ReactElement, deps = {}) => {
+  const dependencies = createMockDependencies(deps);
+  return {
+    ...render(<AppDependenciesProvider value={dependencies}>{ui}</AppDependenciesProvider>),
+    dependencies,
+  };
+};
+```
+
+## Mock Next.js Router
+
+```typescript
+// In jest.setup.ts or at top of test file
+jest.mock("next/navigation", () => ({
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+  }),
+  useSearchParams: () => new URLSearchParams(),
+}));
+```
+
+## Async Testing Patterns
+
+```typescript
+// waitFor - Wait for async state updates
+await waitFor(() => {
+  expect(screen.getByText("Loaded")).toBeInTheDocument();
+});
+
+// findBy - Queries that automatically wait
+const element = await screen.findByText("Async Content");
+
+// userEvent - Preferred over fireEvent
+const user = userEvent.setup();
+await user.click(button);
+await user.type(input, "text");
+```
