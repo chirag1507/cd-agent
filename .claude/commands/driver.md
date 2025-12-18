@@ -33,6 +33,102 @@ Implement Layer 3 of Dave Farley's Four-Layer Model - **Protocol Drivers** that 
 3. **More specific parameters** - DSL parses, driver uses concrete values
 4. **One per channel** - UI driver, API driver, mobile driver, etc.
 5. **Isolate ALL system knowledge** - URLs, selectors, API endpoints
+6. **CRITICAL: Use production routes for actions, back-doors for setup/verification** - See decision matrix below
+
+## CRITICAL: Production Routes vs Back-door Routes (Dave Farley)
+
+> "Test through the public interface, but use back-doors for setup and verification" - Dave Farley
+
+**Decision Matrix:**
+
+| Test Phase        | Use Production Routes             | Use Test Routes (Back-door)        |
+|-------------------|-----------------------------------|------------------------------------|
+| Given (Setup)     | Optional - if testing setup flow  | ✅ Recommended - for efficiency    |
+| When (Actions)    | ✅ REQUIRED - Must test real flow | ❌ NEVER - Defeats purpose         |
+| Then (Assertions) | ✅ For user-visible outcomes      | ✅ For internal state verification |
+| Cleanup           | ❌ No                             | ✅ Yes - efficiency                |
+
+**✅ Use PRODUCTION Routes For:**
+
+Core test actions (When steps) - The behavior you're actually testing:
+
+```typescript
+// ✅ CORRECT: Testing registration through PRODUCTION route
+async registerUser(data: RegistrationData): Promise<void> {
+  // Uses real UI → production /api/auth/register endpoint
+  await this.registrationPage.fillRegistrationForm(data);
+  await this.registrationPage.submitForm(); // Calls PRODUCTION route
+}
+```
+
+**✅ Use TEST Routes (Back-door) For:**
+
+Setup, verification, and cleanup:
+
+```typescript
+// ✅ CORRECT: Back-door for setup
+async createExistingUser(email: string): Promise<void> {
+  await this.userService.registerAndTrackUser({ email, password: 'test123' });
+}
+
+// ✅ CORRECT: Back-door for internal state verification
+async getUserRole(email: string): Promise<string | null> {
+  const response = await this.page.request.get(
+    `${CONFIG.apiUrl}/test-support/users/${email}/role`
+  );
+  return (await response.json()).role;
+}
+
+// ✅ CORRECT: Back-door for cleanup
+async cleanup(): Promise<void> {
+  await this.userService.cleanupAllTrackedData();
+}
+```
+
+**❌ ANTI-PATTERN:**
+
+```typescript
+// ❌ WRONG: Using test route for the action being tested
+async registerUser(data: RegistrationData): Promise<void> {
+  // This bypasses production logic - you're NOT testing the real system!
+  await this.page.request.post(`${CONFIG.apiUrl}/test-support/create-user`, { data });
+}
+```
+
+**Driver Organization Pattern:**
+
+```typescript
+export class AccountWebDriver implements AccountDriver {
+  // ============================================
+  // ACTIONS (Use PRODUCTION routes)
+  // ============================================
+  async registerUser(data: RegistrationData): Promise<void> {
+    await this.registrationPage.fillRegistrationForm(data);
+    await this.registrationPage.submitForm(); // → PRODUCTION /api/auth/register
+  }
+
+  // ============================================
+  // SETUP (Use BACK-DOOR for efficiency)
+  // ============================================
+  async createExistingUser(email: string): Promise<void> {
+    await this.userService.registerAndTrackUser({ email }); // → TEST /api/test-support
+  }
+
+  // ============================================
+  // VERIFICATIONS (Use BACK-DOOR for internal state)
+  // ============================================
+  async getUserRole(email: string): Promise<string | null> {
+    return await this.userService.getUserRole(email); // → TEST /api/test-support
+  }
+
+  // ============================================
+  // CLEANUP (Use BACK-DOOR)
+  // ============================================
+  async cleanup(): Promise<void> {
+    await this.userService.cleanupAllTrackedData();
+  }
+}
+```
 
 ## Driver Interface (Define First)
 
