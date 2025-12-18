@@ -160,6 +160,62 @@ export class ShoppingDSL {
 }
 ```
 
+## Test Data Builders
+
+Use builders to create test data with sensible defaults, allowing customization only where needed.
+
+### Builder Pattern
+
+```typescript
+// drivers/web/pages/builder/registration-details.builder.ts
+export class RegistrationDetailsBuilder {
+  private firstName: string = 'Test';
+  private lastName: string = 'User';
+  private companyName: string = 'Test Company';
+  private companyRole: string = 'Developer';
+  private teamSize: string = '1-10';
+  private email: string = `test.user+${Date.now()}@example.com`;
+
+  // Factory method for fluent API
+  static aRegistration(): RegistrationDetailsBuilder {
+    return new RegistrationDetailsBuilder();
+  }
+
+  withEmail(email: string): RegistrationDetailsBuilder {
+    this.email = email;
+    return this;
+  }
+
+  withFirstName(firstName: string): RegistrationDetailsBuilder {
+    this.firstName = firstName;
+    return this;
+  }
+
+  build(): RegistrationDetails {
+    return {
+      firstName: this.firstName,
+      lastName: this.lastName,
+      companyName: this.companyName,
+      companyRole: this.companyRole,
+      teamSize: this.teamSize,
+      email: this.email,
+    };
+  }
+}
+
+// Usage in tests or DSL
+const details = RegistrationDetailsBuilder.aRegistration()
+  .withEmail('custom@example.com')
+  .build();
+```
+
+### Builder Principles
+
+- Sensible defaults for all properties
+- Static factory method for fluent API
+- Unique identifiers (timestamps) to avoid collisions
+- Only customize what matters for the test
+
 ## Layer 3: Protocol Drivers
 
 Protocol Drivers are translators/adaptors from DSL to "language of the system".
@@ -170,32 +226,60 @@ Protocol Drivers are translators/adaptors from DSL to "language of the system".
 - **More specific parameters** - DSL parses, Driver executes
 - **One per channel** - UI driver, API driver, etc.
 - **Isolate ALL system knowledge here**
+- **Use page objects** - Delegate UI interactions to page objects
+- **Use services** - Inject shared services for state management
 
-### Example Protocol Driver (UI)
+### Example Protocol Driver (UI with Page Objects)
 
 ```typescript
-export class ShoppingUIDriver implements ShoppingDriver {
-  constructor(private page: Page) {}
+export class RegistrationWebDriver implements RegistrationDriver {
+  private readonly signUpPage: SignupPage;
 
-  async navigateToStore(): Promise<void> {
-    await this.page.goto("https://store.example.com");
+  constructor(
+    private readonly page: Page,
+    private readonly userService: UserService,
+    private readonly stubService: StubService
+  ) {
+    // Use factory pattern for page object creation
+    this.signUpPage = PageFactory.createSignupPage(page);
   }
 
-  async searchForBook(title: string): Promise<void> {
-    await this.page.getByLabel("Search").fill(title);
-    await this.page.getByRole("button", { name: "Search" }).click();
-  }
-
-  async selectBook(criteria: { author?: string; title?: string }): Promise<void> {
-    if (criteria.author) {
-      await this.page.getByText(criteria.author).click();
+  // Validation/setup (back-door access)
+  async validateUserIsNotRegistered(email: string): Promise<void> {
+    const response = await this.page.request.get(`${CONFIG.apiUrl}/users/${email}`);
+    if (response.status() !== 404) {
+      throw new Error(`User already exists`);
     }
   }
 
-  async assertItemPurchased(item: string): Promise<void> {
-    await this.page.goto("https://store.example.com/orders");
-    const orderItem = this.page.getByText(item);
-    await expect(orderItem).toBeVisible();
+  // User interactions (delegates to page objects)
+  async provideRegistrationDetails(details: RegistrationDetails): Promise<void> {
+    await this.signUpPage.fillRegistrationForm(details);
+  }
+
+  async completeRegistration(): Promise<void> {
+    // Capture network response while interacting with UI
+    const token = await this.signUpPage.executeRegistration();
+    this.userService.setToken(token);
+  }
+
+  // Assertions (delegates to page objects)
+  async getErrorMessages(): Promise<string[]> {
+    return await this.signUpPage.getErrorMessage();
+  }
+
+  async verifyAccountExists(): Promise<boolean> {
+    const token = this.userService.getToken();
+    const response = await this.page.request.get(`${CONFIG.apiUrl}/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.status() === 200;
+  }
+
+  // Back-door setup for test data
+  async createTestUser(details: RegistrationDetails): Promise<void> {
+    await this.stubService.simulateGitHubAuthProviderSuccess(details.email);
+    await this.userService.registerAndTrackUser(details);
   }
 }
 ```
@@ -468,6 +552,348 @@ async assertPaymentDeclinedMessageShown(): Promise<void> {
 **Scenarist's role**: Control external system behavior (success/failure scenarios)
 **Test's role**: Assert user-visible outcomes resulting from that behavior
 
+## Page Objects
+
+Page Objects encapsulate UI interaction details, providing a clean API for drivers.
+
+### Page Object Pattern
+
+```typescript
+// drivers/web/pages/signup.page.ts
+export class SignupPage extends BasePage {
+  constructor(page: Page) {
+    super(page);
+  }
+
+  // Navigation methods
+  async navigateToAuthPage(): Promise<boolean> {
+    const response = await this.page.goto(`${CONFIG.baseUrl}/auth`);
+    expect(response?.ok()).toBe(true);
+    return response?.ok() ?? false;
+  }
+
+  async authenticateWithGitHub(): Promise<boolean> {
+    await this.continueWithGitHub();
+    await this.page.waitForURL(/\/onboarding\/register/);
+    return true;
+  }
+
+  // Form interaction methods
+  async fillRegistrationForm(details: RegistrationDetails): Promise<void> {
+    await this.page.getByTestId('firstName-input').fill(details.firstName);
+    await this.page.getByTestId('lastName-input').fill(details.lastName);
+    await this.page.getByTestId('companyName-input').fill(details.companyName);
+
+    if (details.companyRole) {
+      await this.page.getByTestId('companyRole-select').click();
+      await this.page.getByRole('option', { name: details.companyRole }).click();
+    }
+
+    if (details.teamSize) {
+      await this.page.getByTestId('teamSize-select').click();
+      await this.page.getByRole('option', { name: details.teamSize }).click();
+    }
+  }
+
+  // Action methods with network capture
+  async executeRegistration(): Promise<string> {
+    const [responseData] = await Promise.all([
+      this.captureNetworkResponse('register'),
+      this.page.getByTestId('submit-button').click(),
+    ]);
+    await this.waitForPageLoad();
+    return responseData.token;
+  }
+
+  // Assertion methods
+  async getErrorMessage(): Promise<string[]> {
+    const errorTestIds = [
+      'firstName-error',
+      'lastName-error',
+      'email-error',
+      'companyName-error',
+      'companyRole-error',
+      'teamSize-error',
+    ];
+
+    const errorMessages = await Promise.all(
+      errorTestIds.map(async (testId) => {
+        try {
+          const element = this.page.getByTestId(testId);
+          await element.waitFor({
+            state: 'visible',
+            timeout: CONFIG.stateUpdateTimeout,
+          });
+          const text = await element.textContent();
+          return text;
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    return errorMessages.filter(
+      (message): message is string => message !== null && message.trim() !== ''
+    );
+  }
+}
+```
+
+### Page Object Principles
+
+- One page object per page/screen
+- Extends BasePage for shared functionality (network capture, waiting)
+- Methods correspond to user actions and assertions
+- Use `data-testid` for element selection (semantic)
+- Return domain models, not Playwright elements
+- Network response capture for state extraction
+
+### PageFactory Pattern
+
+```typescript
+// drivers/web/pages/page.factory.ts
+export class PageFactory {
+  static createSignupPage(page: Page): SignupPage {
+    return new SignupPage(page);
+  }
+
+  static createAddProjectPage(page: Page): AddProjectPage {
+    return new AddProjectPage(page);
+  }
+
+  static createDashboardPage(page: Page): DashboardPage {
+    return new DashboardPage(page);
+  }
+}
+```
+
+**Purpose**: Centralize page object creation for easier refactoring.
+
+## Supporting Services
+
+### UserService (Test Data Tracking)
+
+Tracks created test data for cleanup after tests.
+
+```typescript
+// drivers/web/services/user.service.ts
+export class UserService {
+  private token?: string;
+  private userId?: string;
+  private createdProjectIds: string[] = [];
+
+  constructor(private readonly page: Page) {}
+
+  // Token management
+  setToken(token: string): void {
+    this.token = token;
+  }
+
+  getToken(): string | undefined {
+    return this.token;
+  }
+
+  async setTokenInLocalStorage(token: string): Promise<void> {
+    await this.page.evaluate((value) => {
+      localStorage.setItem('auth-token', value);
+    }, token);
+  }
+
+  // Track created resources
+  trackCreatedProjectId(projectId: string): void {
+    this.createdProjectIds.push(projectId);
+  }
+
+  // Create test user via API (back-door)
+  async registerAndTrackUser(details: RegistrationDetails): Promise<void> {
+    const response = await this.page.request.post(`${CONFIG.apiUrl}/register`, {
+      data: { ...details, providerId: '123' },
+    });
+    if (response.status() !== 201) {
+      throw new Error(`Failed to create test user`);
+    }
+    const data = await response.json();
+    this.userId = data.userId;
+    this.token = data.token;
+  }
+
+  // Cleanup all created resources
+  async cleanupAllTrackedData(): Promise<void> {
+    if (this.token) {
+      try {
+        await this.cleanupCreatedProjects();
+        await this.deleteUser();
+      } finally {
+        this.token = undefined;
+        this.userId = undefined;
+        this.createdProjectIds = [];
+      }
+    }
+  }
+
+  private async cleanupCreatedProjects(): Promise<void> {
+    for (const projectId of this.createdProjectIds) {
+      await this.page.request.delete(`${CONFIG.apiUrl}/projects/${projectId}`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+    }
+  }
+
+  private async deleteUser(): Promise<void> {
+    await this.page.request.delete(`${CONFIG.apiUrl}/users/${this.userId}`, {
+      headers: { Authorization: `Bearer ${this.token}` },
+    });
+  }
+}
+```
+
+### StubService (External System Simulation)
+
+Controls external system behavior via stub/mock API.
+
+```typescript
+// drivers/web/services/stub.service.ts
+export class StubService {
+  constructor(private readonly page: Page) {}
+
+  async simulateGitHubAuthProviderSuccess(email: string): Promise<void> {
+    const response = await this.page.request.post(
+      `${CONFIG.apiUrl}/external-system-stub-control/github-auth`,
+      {
+        data: {
+          state: {
+            success: true,
+            data: { email },
+          },
+        },
+      }
+    );
+    if (response.status() !== 200) {
+      throw new Error(`Failed to setup GitHub auth provider stub`);
+    }
+  }
+
+  async simulateGitHubAuthProviderFailure(): Promise<void> {
+    const response = await this.page.request.post(
+      `${CONFIG.apiUrl}/external-system-stub-control/github-auth`,
+      {
+        data: { state: { success: false } },
+      }
+    );
+    if (response.status() !== 200) {
+      throw new Error(`Failed to fail GitHub authentication`);
+    }
+  }
+}
+```
+
+## World Configuration (Dependency Injection)
+
+Wire up all DSLs, drivers, and services in the Cucumber World.
+
+```typescript
+// support/world.ts
+import { setWorldConstructor, World } from '@cucumber/cucumber';
+import { Browser, BrowserContext, Page, chromium } from '@playwright/test';
+
+export class CustomWorld extends World {
+  browser!: Browser;
+  context!: BrowserContext;
+  page!: Page;
+
+  // DSL instances
+  registrationDSL!: RegistrationDSL;
+  authDSL!: AuthDSL;
+  projectDSL!: ProjectDSL;
+
+  // Shared services
+  private sharedUserService?: UserService;
+  private sharedStubService?: StubService;
+
+  async init(): Promise<void> {
+    // Launch browser
+    this.browser = await chromium.launch({
+      headless: process.env.HEADLESS !== 'false',
+      slowMo: process.env.HEADLESS !== 'false' ? 0 : 500,
+    });
+    this.context = await this.browser.newContext({
+      viewport: { width: 1920, height: 1080 },
+    });
+    this.page = await this.context.newPage();
+
+    // Create shared services
+    this.sharedUserService = new UserService(this.page);
+    this.sharedStubService = new StubService(this.page);
+
+    // Wire up DSLs with drivers
+    this.registrationDSL = new RegistrationDSL(
+      new RegistrationWebDriver(
+        this.page,
+        this.sharedUserService,
+        this.sharedStubService
+      )
+    );
+    this.authDSL = new AuthDSL(
+      new AuthWebDriver(
+        this.page,
+        this.sharedStubService,
+        this.sharedUserService
+      )
+    );
+    // ... more DSLs
+  }
+
+  async cleanup(): Promise<void> {
+    await this.cleanupTestData();
+    if (this.page) await this.page.close();
+    if (this.context) await this.context.close();
+    if (this.browser) await this.browser.close();
+  }
+
+  private async cleanupTestData(): Promise<void> {
+    if (this.sharedUserService) {
+      await this.sharedUserService.cleanupAllTrackedData();
+    }
+  }
+}
+
+setWorldConstructor(CustomWorld);
+```
+
+### Dependency Injection Pattern
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                         WORLD                            │
+│  - Creates shared services (UserService, StubService)    │
+│  - Wires DSLs with drivers                               │
+│  - Manages lifecycle (init, cleanup)                     │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                          DSL                             │
+│  - Receives driver instance                              │
+│  - Domain language methods                               │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                        DRIVER                            │
+│  - Receives: Page, UserService, StubService              │
+│  - Creates page objects via PageFactory                  │
+│  - Delegates UI interactions to page objects             │
+│  - Uses services for state management                    │
+└─────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────┐
+│                     PAGE OBJECTS                         │
+│  - Encapsulate UI interaction details                    │
+│  - Return domain models                                  │
+└─────────────────────────────────────────────────────────┘
+```
+
 ## Growing the DSL
 
 1. **Start pragmatically** - create 2-3 simple tests for most common behavior
@@ -480,25 +906,44 @@ async assertPaymentDeclinedMessageShown(): Promise<void> {
 
 ```
 <project>-system-tests/
-├── test-cases/             # Executable Specifications
-│   ├── shopping/
-│   │   └── buy-book.test.ts
-│   └── account/
-│       └── registration.test.ts
-├── dsl/                    # Domain Specific Language
+├── features/                    # Gherkin feature files
+│   ├── shopping.feature
+│   └── registration.feature
+├── step_definitions/            # Cucumber step definitions
+│   ├── shopping.steps.ts
+│   └── registration.steps.ts
+├── dsl/                         # Domain Specific Language
 │   ├── shopping.dsl.ts
-│   ├── account.dsl.ts
-│   └── params.ts           # Parameter parsing utilities
+│   ├── registration.dsl.ts
+│   ├── models/                  # Domain models and fixtures
+│   │   ├── registration-details.ts
+│   │   └── repository.fixture.ts
+│   └── params.ts                # Parameter parsing utilities
 ├── drivers/
-│   ├── interfaces/         # Driver contracts
-│   │   ├── shopping.driver.ts
-│   │   └── account.driver.ts
-│   ├── ui/                 # UI Protocol Drivers
-│   │   └── shopping-ui.driver.ts
-│   └── api/                # API Protocol Drivers
-│       └── shopping-api.driver.ts
+│   ├── interface/               # Driver contracts
+│   │   ├── shopping-driver.interface.ts
+│   │   └── registration-driver.interface.ts
+│   └── web/                     # UI Protocol Drivers
+│       ├── shopping-web-driver.ts
+│       ├── registration-web-driver.ts
+│       ├── pages/               # Page Objects
+│       │   ├── base.page.ts
+│       │   ├── signup.page.ts
+│       │   ├── shopping.page.ts
+│       │   ├── page.factory.ts
+│       │   └── builder/         # Test Data Builders
+│       │       ├── registration-details.builder.ts
+│       │       └── order-details.builder.ts
+│       └── services/            # Supporting Services
+│           ├── user.service.ts
+│           └── stub.service.ts
+├── scenarios/                   # Scenarist scenarios (if using)
+│   ├── scenario-ids.enum.ts
+│   ├── github-oauth.scenarios.ts
+│   └── stripe-payment.scenarios.ts
 └── support/
     ├── config.ts
+    ├── world.ts                 # Cucumber World (DI container)
     └── hooks.ts
 ```
 

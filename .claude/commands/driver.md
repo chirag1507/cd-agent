@@ -76,7 +76,206 @@ export interface CheckoutResult {
 }
 ```
 
+## Page Objects and Services
+
+UI Protocol Drivers should delegate to **page objects** for UI interactions and use **services** for shared state management.
+
+### Page Object Pattern
+
+```typescript
+// drivers/web/pages/signup.page.ts
+export class SignupPage extends BasePage {
+  constructor(page: Page) {
+    super(page);
+  }
+
+  async fillRegistrationForm(details: RegistrationDetails): Promise<void> {
+    await this.page.getByTestId('firstName-input').fill(details.firstName);
+    await this.page.getByTestId('lastName-input').fill(details.lastName);
+    await this.page.getByTestId('email-input').fill(details.email);
+  }
+
+  async executeRegistration(): Promise<string> {
+    // Capture network response while clicking submit
+    const [responseData] = await Promise.all([
+      this.captureNetworkResponse('register'),
+      this.page.getByTestId('submit-button').click(),
+    ]);
+    await this.waitForPageLoad();
+    return responseData.token;
+  }
+
+  async getErrorMessage(): Promise<string[]> {
+    const errorTestIds = ['firstName-error', 'lastName-error', 'email-error'];
+    const errorMessages = await Promise.all(
+      errorTestIds.map(async (testId) => {
+        try {
+          const element = this.page.getByTestId(testId);
+          await element.waitFor({ state: 'visible', timeout: 1000 });
+          return await element.textContent();
+        } catch {
+          return null;
+        }
+      })
+    );
+    return errorMessages.filter((msg): msg is string => msg !== null && msg.trim() !== '');
+  }
+}
+```
+
+### PageFactory Pattern
+
+```typescript
+// drivers/web/pages/page.factory.ts
+export class PageFactory {
+  static createSignupPage(page: Page): SignupPage {
+    return new SignupPage(page);
+  }
+
+  static createDashboardPage(page: Page): DashboardPage {
+    return new DashboardPage(page);
+  }
+}
+```
+
+### UserService (Test Data Tracking)
+
+```typescript
+// drivers/web/services/user.service.ts
+export class UserService {
+  private token?: string;
+  private userId?: string;
+  private createdProjectIds: string[] = [];
+
+  constructor(private readonly page: Page) {}
+
+  setToken(token: string): void {
+    this.token = token;
+  }
+
+  getToken(): string | undefined {
+    return this.token;
+  }
+
+  trackCreatedProjectId(projectId: string): void {
+    this.createdProjectIds.push(projectId);
+  }
+
+  async registerAndTrackUser(details: RegistrationDetails): Promise<void> {
+    const response = await this.page.request.post(`${CONFIG.apiUrl}/register`, {
+      data: details,
+    });
+    const data = await response.json();
+    this.userId = data.userId;
+    this.token = data.token;
+  }
+
+  async cleanupAllTrackedData(): Promise<void> {
+    if (this.token) {
+      for (const projectId of this.createdProjectIds) {
+        await this.page.request.delete(`${CONFIG.apiUrl}/projects/${projectId}`, {
+          headers: { Authorization: `Bearer ${this.token}` },
+        });
+      }
+      await this.page.request.delete(`${CONFIG.apiUrl}/users/${this.userId}`, {
+        headers: { Authorization: `Bearer ${this.token}` },
+      });
+      this.token = undefined;
+      this.userId = undefined;
+      this.createdProjectIds = [];
+    }
+  }
+}
+```
+
+### StubService (External System Control)
+
+```typescript
+// drivers/web/services/stub.service.ts
+export class StubService {
+  constructor(private readonly page: Page) {}
+
+  async simulateGitHubAuthProviderSuccess(email: string): Promise<void> {
+    const response = await this.page.request.post(
+      `${CONFIG.apiUrl}/external-system-stub-control/github-auth`,
+      {
+        data: {
+          state: { success: true, data: { email } },
+        },
+      }
+    );
+    if (response.status() !== 200) {
+      throw new Error(`Failed to setup GitHub auth provider stub`);
+    }
+  }
+
+  async simulateGitHubAuthProviderFailure(): Promise<void> {
+    const response = await this.page.request.post(
+      `${CONFIG.apiUrl}/external-system-stub-control/github-auth`,
+      {
+        data: { state: { success: false } },
+      }
+    );
+    if (response.status() !== 200) {
+      throw new Error(`Failed to fail GitHub authentication`);
+    }
+  }
+}
+```
+
 ## UI Protocol Driver (Playwright)
+
+With page objects and services:
+
+```typescript
+// drivers/web/registration-web-driver.ts
+export class RegistrationWebDriver implements RegistrationDriver {
+  private readonly signUpPage: SignupPage;
+
+  constructor(
+    private readonly page: Page,
+    private readonly userService: UserService,
+    private readonly stubService: StubService
+  ) {
+    this.signUpPage = PageFactory.createSignupPage(page);
+  }
+
+  async validateUserIsNotRegistered(email: string): Promise<void> {
+    const response = await this.page.request.get(`${CONFIG.apiUrl}/users/${email}`);
+    if (response.status() !== 404) {
+      throw new Error(`User already exists`);
+    }
+  }
+
+  async provideRegistrationDetails(details: RegistrationDetails): Promise<void> {
+    await this.signUpPage.fillRegistrationForm(details);
+  }
+
+  async completeRegistration(): Promise<void> {
+    const token = await this.signUpPage.executeRegistration();
+    this.userService.setToken(token);
+  }
+
+  async getErrorMessages(): Promise<string[]> {
+    return await this.signUpPage.getErrorMessage();
+  }
+
+  async verifyAccountExists(): Promise<boolean> {
+    const token = this.userService.getToken();
+    const response = await this.page.request.get(`${CONFIG.apiUrl}/users`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.status() === 200;
+  }
+
+  async createTestUser(details: RegistrationDetails): Promise<void> {
+    await this.stubService.simulateGitHubAuthProviderSuccess(details.email);
+    await this.userService.registerAndTrackUser(details);
+  }
+}
+```
+
+## UI Protocol Driver (Without Page Objects - Simple)
 
 ```typescript
 // drivers/ui/shopping-ui.driver.ts
@@ -427,13 +626,37 @@ export function createShoppingDriver(type: DriverType, context?: Page): Shopping
 }
 ```
 
+## Directory Structure
+
+```
+drivers/
+├── interface/
+│   ├── shopping-driver.interface.ts
+│   └── registration-driver.interface.ts
+└── web/                          # UI Protocol Drivers
+    ├── shopping-web-driver.ts
+    ├── registration-web-driver.ts
+    ├── pages/                    # Page Objects
+    │   ├── base.page.ts
+    │   ├── signup.page.ts
+    │   ├── shopping.page.ts
+    │   ├── page.factory.ts
+    │   └── builder/              # Test Data Builders
+    │       └── registration-details.builder.ts
+    └── services/                 # Supporting Services
+        ├── user.service.ts       # Test data tracking/cleanup
+        └── stub.service.ts       # External system control
+```
+
 ## Process
 
-1. **Define interface** in `drivers/interfaces/`
+1. **Define interface** in `drivers/interface/`
 2. **Choose channel** - UI (Playwright), API (fetch), etc.
-3. **Implement driver** mirroring DSL interface
-4. **Isolate system knowledge** - URLs, selectors, endpoints
-5. **Add external stubs** for third-party services
+3. **Create page objects** for UI drivers (delegate UI interactions)
+4. **Create services** for shared state (UserService, StubService)
+5. **Implement driver** mirroring DSL interface
+6. **Isolate system knowledge** - URLs, selectors, endpoints
+7. **Add external stubs** for third-party services via StubService
 
 ## Verification
 

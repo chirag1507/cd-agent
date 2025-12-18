@@ -210,8 +210,24 @@ Next steps:
 - If all layers exist: Run the test to verify
 ```
 
+## Test Data Management
+
+Use **builders** for test data to decouple tests from construction logic:
+
+```typescript
+// Instead of inline data
+const details = { firstName: 'John', lastName: 'Doe', email: 'john@example.com', ... };
+
+// Use builders with defaults
+const details = RegistrationDetailsBuilder.aRegistration()
+  .withEmail('john@example.com')
+  .build();
+```
+
+Builders live in `drivers/web/pages/builder/` and are used by DSL/drivers for test data creation.
+
 ## Next Steps
 
-1. **DSL doesn't exist?** → Use `/dsl` to implement the Domain Specific Language
-2. **Drivers don't exist?** → Use `/driver` to implement Protocol Drivers
+1. **DSL doesn't exist?** → Use `/dsl` to implement the Domain Specific Language (includes builders, fixtures)
+2. **Drivers don't exist?** → Use `/driver` to implement Protocol Drivers (includes page objects, services)
 3. **All layers exist?** → Run the test, then use `/red` for TDD implementation

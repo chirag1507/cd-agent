@@ -240,13 +240,120 @@ async assertOutOfStockNotification(...args: string[]): Promise<void> {
 }
 ```
 
+## Test Data: Builders and Fixtures
+
+### Builders for Domain Models
+
+Create builders for test data with sensible defaults:
+
+```typescript
+// dsl/models/builders/registration-details.builder.ts
+export class RegistrationDetailsBuilder {
+  private firstName: string = 'Test';
+  private lastName: string = 'User';
+  private email: string = `test.user+${Date.now()}@example.com`;
+
+  static aRegistration(): RegistrationDetailsBuilder {
+    return new RegistrationDetailsBuilder();
+  }
+
+  withEmail(email: string): RegistrationDetailsBuilder {
+    this.email = email;
+    return this;
+  }
+
+  withFirstName(firstName: string): RegistrationDetailsBuilder {
+    this.firstName = firstName;
+    return this;
+  }
+
+  build(): RegistrationDetails {
+    return {
+      firstName: this.firstName,
+      lastName: this.lastName,
+      email: this.email,
+    };
+  }
+}
+
+// Usage in DSL
+async fillRegistrationForm(...args: string[]): Promise<void> {
+  const params = new Params(args);
+  const email = params.optional("email", undefined);
+
+  const details = RegistrationDetailsBuilder.aRegistration()
+    .withEmail(email || `test-${Date.now()}@example.com`)
+    .build();
+
+  await this.driver.provideRegistrationDetails(details);
+}
+```
+
+### Fixtures for Static Test Data
+
+Create fixtures for static reference data:
+
+```typescript
+// dsl/models/repository.fixture.ts
+export interface RepositoryDto {
+  id: number;
+  name: string;
+  fullName: string;
+  isPrivate: boolean;
+}
+
+export const REPO_NAME_SHOPPING_CART = 'shopping-cart';
+export const REPO_NAME_USER_SERVICE = 'user-service';
+
+export function defaultRepositories(): RepositoryDto[] {
+  return [
+    {
+      id: 1,
+      name: REPO_NAME_SHOPPING_CART,
+      fullName: REPO_NAME_SHOPPING_CART,
+      isPrivate: false,
+    },
+    {
+      id: 2,
+      name: REPO_NAME_USER_SERVICE,
+      fullName: REPO_NAME_USER_SERVICE,
+      isPrivate: true,
+    },
+  ];
+}
+
+// Usage in DSL
+async selectRepository(...args: string[]): Promise<void> {
+  const params = new Params(args);
+  const repoName = params.optional("name", REPO_NAME_SHOPPING_CART);
+  await this.driver.selectRepository(repoName);
+}
+```
+
+### Directory Structure for Models
+
+```
+dsl/
+├── shopping.dsl.ts
+├── registration.dsl.ts
+├── models/
+│   ├── registration-details.ts       # Interface
+│   ├── repository.fixture.ts         # Static test data
+│   └── builders/
+│       ├── registration-details.builder.ts
+│       └── order-details.builder.ts
+└── params.ts
+```
+
 ## Process
 
 1. **Review the test case** that needs DSL support
 2. **Identify methods needed** - actions, assertions, setup
-3. **Design the interface** - what parameters make sense?
-4. **Implement with defaults** - sensible values for everything
-5. **Delegate to driver** - DSL parses, driver executes
+3. **Define domain models** - interfaces for test data
+4. **Create builders/fixtures** - sensible defaults for test data
+5. **Design the interface** - what parameters make sense?
+6. **Implement with defaults** - sensible values for everything
+7. **Delegate to driver** - DSL parses, driver executes
 
 ## Verification
 
