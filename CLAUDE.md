@@ -591,6 +591,7 @@ Each feature follows this strict order:
 - Follow conventional commits (feat:, fix:, refactor:, test:, docs:)
 - Never mention TDD in code comments or commit messages—the process is invisible
 - All code must have tests at the appropriate pyramid level
+- **NO "WHAT" comments**: Do not add comments that describe what the code does—the code itself should be self-explanatory through clear naming and structure. Only add "WHY" comments when business logic or technical decisions are non-obvious
 
 ### TDD Discipline
 - ONE test at a time—this is non-negotiable
