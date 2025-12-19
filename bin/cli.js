@@ -8,6 +8,7 @@ const command = args[0];
 
 const COMMANDS_DIR = path.join(__dirname, '..', '.claude', 'commands');
 const RULES_DIR = path.join(__dirname, '..', '.claude', 'rules');
+const DOCS_DIR = path.join(__dirname, '..', 'docs');
 const CLAUDE_MD = path.join(__dirname, '..', 'CLAUDE.md');
 
 function copyDir(src, dest) {
@@ -88,6 +89,16 @@ function init(options = {}) {
   } else {
     console.error('✗ Rules directory not found');
     process.exit(1);
+  }
+
+  // Copy docs directory
+  if (fs.existsSync(DOCS_DIR)) {
+    const docsTarget = path.join(targetDir, 'docs');
+    copyDir(DOCS_DIR, docsTarget);
+    const docCount = fs.readdirSync(DOCS_DIR).filter(f => f.endsWith('.md')).length;
+    console.log(`✓ Copied ${docCount} documentation files to docs/`);
+  } else {
+    console.log('⚠ Documentation directory not found, skipping');
   }
 
   // Copy CLAUDE.md if requested
