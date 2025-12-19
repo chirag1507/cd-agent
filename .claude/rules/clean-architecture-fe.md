@@ -6,6 +6,19 @@
 
 Frontend follows the same Clean Architecture principles as backend: **dependencies point inward**, business logic is framework-agnostic, and presentation is a thin layer.
 
+## Component Architecture: Atomic Design
+
+**CRITICAL**: All UI components MUST follow Atomic Design hierarchy. See [atomic-design.md](atomic-design.md) for the complete decision guide.
+
+**Quick Reference:**
+- **Atoms**: Button, Input, Typography, Icon → `shared/components/atoms/`
+- **Molecules**: SearchBar, IconButton, FormField → `shared/components/molecules/`
+- **Organisms**: Navbar, AuthForm, DataTable → `shared/components/organisms/`
+- **Templates**: DashboardLayout, AuthLayout → `shared/components/templates/`
+- **Feature Components**: Domain-specific UI → `features/<feature>/components/`
+
+**Before creating ANY component**, determine its atomic level using the decision guide in [atomic-design.md](atomic-design.md).
+
 ## Layer Structure
 
 ```

@@ -269,7 +269,12 @@ src/
 - **Mappers**: Static methods, pure functions, domain → presentation
 - **Hooks**: Coordinate use cases + React state, inject dependencies
 - **Components**: Thin presentation, delegate logic to hooks
-- **Atomic Design**: atoms → molecules → organisms → templates
+- **Atomic Design (MANDATORY)**: Every component MUST fit into hierarchy
+  - **Atoms**: Button, Input, Typography (indivisible) → `shared/components/atoms/`
+  - **Molecules**: SearchBar, FormField (2-3 atoms) → `shared/components/molecules/`
+  - **Organisms**: Navbar, AuthForm (complex sections) → `shared/components/organisms/`
+  - **Templates**: DashboardLayout (page structure) → `shared/components/templates/`
+  - **Feature Components**: Domain-specific → `features/<feature>/components/`
 
 ### 4. Four-Layer Model (Dave Farley)
 

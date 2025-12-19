@@ -1,10 +1,74 @@
 # Atomic Design System
 
-> **Trigger**: Creating or modifying UI components in `shared/components/` or `features/*/components/`
+> **Trigger**: Creating or modifying ANY UI component files (`.tsx`, `.jsx`) in frontend projects
+>
+> **CRITICAL**: Every frontend component MUST follow Atomic Design hierarchy. Before creating any component, determine its level: Atom, Molecule, Organism, or Template.
 
 ## Core Principle
 
 UI components follow Brad Frost's **Atomic Design** methodology, building complex interfaces from simple, reusable building blocks. We use **shadcn/ui** as our component library foundation with **Tailwind CSS** for styling.
+
+## BEFORE Creating Any Component: Decision Guide
+
+**MANDATORY**: Before creating any component, determine its level using this guide:
+
+| Component Type | When to Use | Examples | Location |
+|----------------|-------------|----------|----------|
+| **Atom** | Smallest, indivisible UI element. Cannot be broken down further. | Button, Input, Typography, Icon, Badge, Avatar | `shared/components/atoms/` |
+| **Molecule** | Simple group of atoms working together as a unit. | SearchBar (input + button), IconButton (icon + button), FormField (label + input + error), CardHeader (title + subtitle) | `shared/components/molecules/` |
+| **Organism** | Complex, self-contained section combining molecules and atoms. | Navbar, AuthForm, DataTable, SidePanel, ProductCard, UserProfileCard | `shared/components/organisms/` |
+| **Template** | Page-level layout structure with content slots. | DashboardLayout, AuthLayout, MainLayout, TwoColumnLayout | `shared/components/templates/` |
+| **Feature Component** | Domain-specific component for a particular feature. | ProjectList, KudosCard, DiagnosisChart | `features/<feature>/components/` |
+
+### Component Selection Flow
+
+```
+Is it feature-specific (domain logic)?
+  YES → Feature Component (features/<feature>/components/)
+  NO  → Continue ↓
+
+Can it be broken into smaller parts?
+  NO  → Atom (shared/components/atoms/)
+  YES → Continue ↓
+
+Does it combine 2-3 atoms into a simple unit?
+  YES → Molecule (shared/components/molecules/)
+  NO  → Continue ↓
+
+Is it a page layout structure?
+  YES → Template (shared/components/templates/)
+  NO  → Organism (shared/components/organisms/)
+```
+
+### Examples to Clarify
+
+**Atom Examples:**
+- `<Button>` - Cannot break down further
+- `<Input>` - Basic text input
+- `<Typography variant="h1">` - Text element
+- `<Icon name="check" />` - Icon display
+
+**Molecule Examples:**
+- `<SearchBar>` - Input + Search Button (2 atoms)
+- `<IconButton>` - Icon + Button label (2 atoms)
+- `<FormField>` - Label + Input + Error message (3 atoms)
+- `<CardHeader>` - Title Typography + Subtitle Typography (2 atoms)
+
+**Organism Examples:**
+- `<Navbar>` - Logo + Navigation links + User menu + Search (complex structure)
+- `<AuthForm>` - Multiple form fields + submit button + social login buttons
+- `<DataTable>` - Table headers + rows + pagination + filters
+- `<ProductCard>` - Image + Title + Description + Price + Add to cart button
+
+**Template Examples:**
+- `<DashboardLayout>` - Navbar + Sidebar + Main content area + Footer
+- `<AuthLayout>` - Centered card with logo + form slot
+- `<TwoColumnLayout>` - Sidebar slot + Main content slot
+
+**Feature Component Examples:**
+- `<ProjectList>` - Uses ProjectCard organisms, specific to project feature
+- `<KudosForm>` - Kudos-specific form, lives in kudos feature
+- `<DiagnosisChart>` - Chart specific to diagnosis feature
 
 ## Component Hierarchy
 
@@ -467,16 +531,6 @@ export const UserAvatar = ({ userId }) => {
 // ❌ BAD: Atom depending on molecule
 import { IconButton } from '../molecules/IconButton'; // Atoms can't import molecules!
 ```
-
-## Decision Guide
-
-| If you need... | Create a... | Location |
-|----------------|-------------|----------|
-| Basic styled element | Atom | `shared/components/atoms/` |
-| Group of atoms working together | Molecule | `shared/components/molecules/` |
-| Self-contained UI section | Organism | `shared/components/organisms/` |
-| Page layout structure | Template | `shared/components/templates/` |
-| Feature-specific UI | Feature Component | `features/<feature>/components/` |
 
 ## File Naming
 

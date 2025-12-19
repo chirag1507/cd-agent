@@ -189,25 +189,65 @@ export const useCategories = ({ projectId, useCase }: Dependencies) => {
 };
 ```
 
-### Frontend Component (Atom/Molecule)
+### Frontend Component - Atomic Design (MANDATORY)
+
+**Before implementing, determine component level:**
+- **Atom**: Indivisible (Button, Input, Typography) → `shared/components/atoms/`
+- **Molecule**: 2-3 atoms (SearchBar, FormField) → `shared/components/molecules/`
+- **Organism**: Complex sections (Navbar, AuthForm) → `shared/components/organisms/`
+- **Template**: Page layouts → `shared/components/templates/`
+- **Feature**: Domain-specific → `features/<feature>/components/`
+
+**Atom Example:**
 ```typescript
 // shared/components/atoms/Typography/Typography.tsx
 export const Typography = ({ variant = 'body', children, className }: Props) => {
-  // ONLY what the test requires
   return <p className={cn(variantStyles[variant], className)}>{children}</p>;
 };
 ```
 
-### Frontend Component (Organism)
+**Molecule Example:**
 ```typescript
-// features/<feature>/components/AuthForm.tsx
+// shared/components/molecules/SearchBar/SearchBar.tsx
+export const SearchBar = ({ onSearch, placeholder }: Props) => {
+  return (
+    <div className="flex gap-2">
+      <Input placeholder={placeholder} />
+      <Button onClick={onSearch}>Search</Button>
+    </div>
+  );
+};
+```
+
+**Organism Example:**
+```typescript
+// shared/components/organisms/AuthForm/AuthForm.tsx
 export const AuthForm = ({ onSubmit, loading }: Props) => {
   return (
     <Card>
-      <Button onClick={onSubmit} disabled={loading}>
-        {loading ? 'Signing in...' : 'Sign In'}
-      </Button>
+      <CardHeader>
+        <Typography variant="h2">Sign In</Typography>
+      </CardHeader>
+      <CardContent>
+        <Button onClick={onSubmit} disabled={loading}>
+          {loading ? 'Signing in...' : 'Sign In'}
+        </Button>
+      </CardContent>
     </Card>
+  );
+};
+```
+
+**Feature Component Example:**
+```typescript
+// features/projects/components/ProjectList.tsx
+export const ProjectList = ({ projects, onSelect }: Props) => {
+  return (
+    <div className="grid gap-4">
+      {projects.map(project => (
+        <ProjectCard key={project.id} project={project} onSelect={onSelect} />
+      ))}
+    </div>
   );
 };
 ```
