@@ -64,6 +64,46 @@ Test Cases are written in the language of the problem domain.
 - Share test data between test cases
 - Include implementation details
 
+### Common Implementation Details to Avoid in Gherkin
+
+**Authentication & Sessions:**
+- ❌ "I should receive a JWT token"
+- ❌ "The token should contain user ID"
+- ❌ "The token should expire in 24 hours"
+- ✅ "I should be logged in"
+- ✅ "I should remain logged in for 24 hours"
+- ✅ "I should be able to access protected features"
+
+**API & Responses:**
+- ❌ "The API should return status 200"
+- ❌ "The response should contain a user object"
+- ❌ "The JSON response should not include password"
+- ✅ "I should see my profile information"
+- ✅ "My password should not be visible"
+
+**Database & Storage:**
+- ❌ "The user record should be in the database"
+- ❌ "The token should be stored in localStorage"
+- ❌ "A session should be created in Redis"
+- ✅ "My account should be created"
+- ✅ "I should remain logged in after refreshing the page"
+
+**Technical Configuration:**
+- ❌ "Given JWT expiry is configured to 86400 seconds"
+- ❌ "The bcrypt hash should be stored"
+- ❌ "OAuth callback URL should be whitelisted"
+- ✅ "I should be automatically logged out after 24 hours"
+- ✅ "My password should be securely stored"
+
+**UI Implementation:**
+- ❌ "The login button should call /api/auth/login"
+- ❌ "The form should submit with POST method"
+- ❌ "The email field should have validation regex"
+- ✅ "I should be able to log in"
+- ✅ "I should see an error for invalid email"
+
+**Remember:** If you can't explain the scenario to a non-technical stakeholder without mentioning technical terms (JWT, API, database, HTTP), rewrite it.
+
 ### Example Test Case
 
 ```typescript
