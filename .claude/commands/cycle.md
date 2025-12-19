@@ -25,6 +25,64 @@ $ARGUMENTS
 
 (If no input, continue with the feature from context)
 
+## Configuration
+
+Before starting, I will ask you which parts to implement:
+
+```
+═══════════════════════════════════════════════════════════════════════
+CYCLE CONFIGURATION
+═══════════════════════════════════════════════════════════════════════
+
+Feature: [Feature Name]
+
+Which layers do you want to implement?
+
+PRESETS:
+─────────
+1. Full Stack (Backend + Frontend + Contracts + System Tests)
+2. Backend Only (Phases 2 + 4 Provider + 5)
+3. Frontend Only (Phases 3 + 4 Consumer + 5)
+4. Backend API (Phase 2 only, skip contracts & system tests)
+5. Frontend UI (Phase 3 only, skip contracts & system tests)
+6. Custom (choose specific phases/layers)
+
+CUSTOM CONFIGURATION:
+─────────────────────
+Phase 2 - Backend Implementation:
+  [ ] Sociable Unit Tests (Use Cases)
+  [ ] Narrow Integration Tests (Repositories)
+  [ ] Component Tests (HTTP API)
+
+Phase 3 - Frontend Implementation:
+  [ ] Use Case Tests
+  [ ] Mapper Tests
+  [ ] Hook Tests
+  [ ] Component Tests (Atomic Design)
+
+Phase 4 - Contract Verification:
+  [ ] Consumer Contracts (Frontend)
+  [ ] Provider Verification (Backend)
+
+Phase 5 - System Test Implementation:
+  [ ] Step Definitions
+  [ ] Protocol Drivers
+  [ ] Page Objects + Services
+
+Enter choice (1-6) or customize:
+```
+
+**Common Scenarios:**
+
+| Scenario | Preset | What's Included |
+|----------|--------|-----------------|
+| Complete feature end-to-end | 1 - Full Stack | All phases: Backend → Frontend → Contracts → System Tests |
+| API-only feature (no UI) | 2 - Backend Only | Backend tests + Provider contracts + System tests (API driver) |
+| UI-only feature (existing API) | 3 - Frontend Only | Frontend tests + Consumer contracts + System tests (UI driver) |
+| Quick backend prototype | 4 - Backend API | Unit → Integration → Component tests only |
+| Quick frontend prototype | 5 - Frontend UI | Use Case → Mapper → Hook → Component tests only |
+| Specific needs | 6 - Custom | Select individual layers |
+
 ## Workflow Overview
 
 ```
@@ -376,32 +434,59 @@ Check:
 1. Verify Prerequisites
    └─> Check Phase 0 (plan) and Phase 1 (feature + DSL) complete
 
-2. Phase 2: Backend
+2. Ask for Configuration
+   └─> Preset or Custom layer selection
+
+3. Execute Selected Phases:
+
+   IF Backend selected:
    ├─> Sociable Unit Tests (TDD: RED → GREEN → REFACTOR)
    ├─> Narrow Integration Tests (TDD: RED → GREEN → REFACTOR)
    ├─> Component Tests (TDD: RED → GREEN → REFACTOR)
    └─> 🚦 Backend Review Gate
 
-3. Phase 3: Frontend
+   IF Frontend selected:
    ├─> Use Case Tests (TDD: RED → GREEN → REFACTOR)
    ├─> Mapper Tests (TDD: RED → GREEN → REFACTOR)
    ├─> Hook Tests (TDD: RED → GREEN → REFACTOR)
    ├─> Component Tests (Atomic Design + TDD)
    └─> 🚦 Frontend Review Gate
 
-4. Phase 4: Contracts
-   ├─> Consumer Contracts (Frontend)
-   ├─> Provider Verification (Backend)
+   IF Contracts selected:
+   ├─> Consumer Contracts (if Frontend selected)
+   ├─> Provider Verification (if Backend selected)
    └─> 🚦 Contracts Verified Gate
 
-5. Phase 5: System Tests
+   IF System Tests selected:
    ├─> Step Definitions
-   ├─> Protocol Drivers (with Page Objects + Services)
+   ├─> Protocol Drivers (UI if Frontend, API if Backend only)
    ├─> Test Data Builders
    └─> 🚦 System Tests Pass Gate
 
-6. Ready to Commit
+4. Ready to Commit
    └─> /commit
+```
+
+**Configuration Examples:**
+
+```
+Preset 1 (Full Stack):
+  ✓ Backend → ✓ Frontend → ✓ Contracts (both) → ✓ System Tests (UI + API)
+
+Preset 2 (Backend Only):
+  ✓ Backend → ✗ Frontend → ✓ Contracts (Provider only) → ✓ System Tests (API driver)
+
+Preset 3 (Frontend Only):
+  ✗ Backend → ✓ Frontend → ✓ Contracts (Consumer only) → ✓ System Tests (UI driver)
+
+Preset 4 (Backend API):
+  ✓ Backend → ✗ Frontend → ✗ Contracts → ✗ System Tests
+
+Preset 5 (Frontend UI):
+  ✗ Backend → ✓ Frontend → ✗ Contracts → ✗ System Tests
+
+Custom (Backend Unit + Frontend UI + System Tests):
+  ✓ Backend (Unit only) → ✓ Frontend (all) → ✗ Contracts → ✓ System Tests (UI driver)
 ```
 
 ## Output Format
@@ -415,6 +500,15 @@ PREREQUISITES CHECK
 ───────────────────
 ✓ Phase 0: Plan complete (behavioral analysis)
 ✓ Phase 1: Feature file + DSL created
+
+CONFIGURATION
+─────────────
+Selected: Backend Only
+Phases:
+  ✓ Phase 2: Backend Implementation
+  ✗ Phase 3: Frontend Implementation (skipped)
+  ✓ Phase 4: Provider Contracts
+  ✓ Phase 5: System Tests (API driver only)
 
 ═══════════════════════════════════════════════════════════════════════
 PHASE 2: BACKEND IMPLEMENTATION
