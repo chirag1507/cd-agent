@@ -34,9 +34,13 @@ $ARGUMENTS
 - [ ] Handles technical concerns (DB, HTTP, etc.)
 - [ ] Mappers for domain ↔ persistence conversion
 
-**Presentation Layer**
+**Presentation Layer** (see [controller-pattern-be.md](../rules/controller-pattern-be.md))
 - [ ] DTOs for request/response
 - [ ] Controllers are thin (delegate to use cases)
+- [ ] Controllers use HttpRequest/HttpResponse wrappers
+- [ ] Error mapping uses `instanceof` (not string matching)
+- [ ] Semantic HTTP methods (created, ok, conflict, badRequest, etc.)
+- [ ] Controllers only validate required fields (domain validation in use case)
 - [ ] Mappers for domain ↔ HTTP conversion
 
 ### 2. Test Quality
@@ -188,6 +192,30 @@ if (user.role === 'admin') { ... }
 
 // GOOD: Logic in use case
 const result = await checkAdminAccessUseCase.execute(userId);
+```
+
+**String-Based Error Detection**
+```typescript
+// BAD: String matching for errors
+if (error.message.includes('already exists')) {
+  res.status(409).json({ error });
+}
+
+// GOOD: Type-safe instanceof
+if (error instanceof UserAlreadyExistsError) {
+  httpResponse.conflict({ error: error.message });
+}
+```
+
+**Manual Status Codes**
+```typescript
+// BAD: Manual status codes
+res.status(201).json(data);
+res.status(409).json(error);
+
+// GOOD: Semantic HTTP methods
+httpResponse.created(data);
+httpResponse.conflict(error);
 ```
 
 ### Test Issues

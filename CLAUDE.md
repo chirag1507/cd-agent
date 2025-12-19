@@ -180,6 +180,13 @@ Use-case driven design with strict dependency rules:
 - Return `Result<Success, BusinessError>` types
 - Cross-cutting concerns via decorators (logging, caching, session management)
 
+**Controller Pattern** (see `.claude/rules/controller-pattern-be.md`):
+- Thin HTTP adapters using HttpRequest/HttpResponse wrappers
+- Delegate business logic to Use Cases
+- Map domain errors to HTTP status using `instanceof`
+- Use semantic methods: `httpResponse.created()`, `conflict()`, `badRequest()`, etc.
+- Validate required fields only (domain validation in use cases)
+
 **Project Structure**:
 ```
 src/

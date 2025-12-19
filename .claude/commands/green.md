@@ -137,6 +137,44 @@ export class User {
 }
 ```
 
+### Backend Controller (see [controller-pattern-be.md](../rules/controller-pattern-be.md))
+```typescript
+// features/authentication/presentation/controllers/register.controller.ts
+export class RegisterController implements Controller {
+  constructor(private readonly registerUserUseCase: RegisterUserUseCase) {}
+
+  async handle(httpRequest: HttpRequest, httpResponse: HttpResponse): Promise<void> {
+    const { email, password, name } = httpRequest.body;
+
+    if (!email || !password || !name) {
+      httpResponse.badRequest({ error: 'Missing required fields' });
+      return;
+    }
+
+    const result = await this.registerUserUseCase.execute({ email, password, name });
+
+    if (result.isSuccess) {
+      httpResponse.created(result.getValue());
+      return;
+    }
+
+    const error = result.getError();
+
+    if (error instanceof UserAlreadyExistsError) {
+      httpResponse.conflict({ error: error.message });
+      return;
+    }
+
+    if (error instanceof InvalidEmailError) {
+      httpResponse.badRequest({ error: error.message });
+      return;
+    }
+
+    httpResponse.serverError({ error: 'Unexpected error' });
+  }
+}
+```
+
 ## Frontend Implementation Patterns
 
 ### Frontend Use Case
