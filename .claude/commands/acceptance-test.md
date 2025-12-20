@@ -42,6 +42,8 @@ Example: Testing buying a book on Amazon. Could your test work for a robot shopp
 
 ## Non-Negotiable Rules
 
+**For preventing flaky tests**, see [test-flakiness.md](../rules/test-flakiness.md) - critical for reliable system tests.
+
 ### DO
 - Use **problem-domain language exclusively**
 - Write from the perspective of an **external user**

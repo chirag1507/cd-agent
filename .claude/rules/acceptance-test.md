@@ -38,6 +38,7 @@ Create Executable Specifications that verify business behavior through the compl
 3. **Run in production-like environments**
 4. **Interact through public interfaces only** (no back-door access)
 5. **Focus on WHAT, not HOW**
+6. **Non-flaky and reliable** (see [test-flakiness.md](test-flakiness.md) for critical patterns)
 
 ## Layer 1: Test Cases (Executable Specifications)
 

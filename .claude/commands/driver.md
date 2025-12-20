@@ -28,6 +28,8 @@ Implement Layer 3 of Dave Farley's Four-Layer Model - **Protocol Drivers** that 
 
 ## Protocol Driver Principles (Non-Negotiable)
 
+**For preventing flaky tests**, see [test-flakiness.md](../rules/test-flakiness.md) - follow strict patterns to avoid race conditions, timing issues, and brittle selectors.
+
 1. **Translators/Adaptors** - from DSL to system language
 2. **Mirror DSL interface** - `dsl.checkOut()` → `driver.checkOut()`
 3. **More specific parameters** - DSL parses, driver uses concrete values
