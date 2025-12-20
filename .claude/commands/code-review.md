@@ -64,6 +64,14 @@ $ARGUMENTS
 - [ ] No mocks with behavior expectations (prefer stubs)
 - [ ] `jest.fn()` used correctly
 
+**Test Reliability** (see [test-flakiness.md](../rules/test-flakiness.md) for system tests)
+- [ ] No hard-coded waits (`waitForTimeout`, `setTimeout`)
+- [ ] Proper async/await usage (no missing awaits)
+- [ ] Test data isolation (unique data per test, cleanup hooks)
+- [ ] Condition-based waits (`waitForSelector`, `waitForResponse`)
+- [ ] No brittle selectors (use `data-testid`, roles, labels)
+- [ ] Independent tests (no execution order dependencies)
+
 ### 3. Code Quality
 
 **SOLID Principles**
@@ -192,6 +200,34 @@ if [ ! -z "$ATOM_VIOLATIONS" ]; then
   echo "❌ Atoms importing from higher levels:"
   echo "$ATOM_VIOLATIONS"
   echo "   Fix: Atoms should only import from other atoms or primitives"
+fi
+
+# Test Flakiness: Check for hard-coded waits
+echo "🔍 Checking for test flakiness patterns..."
+HARD_WAITS=$(git grep -n "waitForTimeout\|setTimeout.*resolve" **/*.test.ts **/*.spec.ts 2>/dev/null | grep -v "// OK:" || true)
+
+if [ ! -z "$HARD_WAITS" ]; then
+  echo "❌ Found hard-coded waits (flaky):"
+  echo "$HARD_WAITS"
+  echo "   Fix: Use waitForSelector/waitForResponse/expect().toBeVisible()"
+fi
+
+# Test Flakiness: Check for missing awaits in tests
+MISSING_AWAITS=$(git grep -n "^\s*page\.\|^\s*click\|^\s*fill" **/*.test.ts **/*.spec.ts 2>/dev/null | grep -v "await\|//" || true)
+
+if [ ! -z "$MISSING_AWAITS" ]; then
+  echo "⚠️  Possible missing awaits in tests:"
+  echo "$MISSING_AWAITS"
+  echo "   Fix: Add 'await' before async Playwright operations"
+fi
+
+# Test Flakiness: Check for brittle selectors
+BRITTLE_SELECTORS=$(git grep -n "querySelector\|getByClassName\|nth-child" **/*.test.ts **/*.spec.ts **/*driver*.ts 2>/dev/null || true)
+
+if [ ! -z "$BRITTLE_SELECTORS" ]; then
+  echo "⚠️  Found brittle selectors:"
+  echo "$BRITTLE_SELECTORS"
+  echo "   Fix: Use data-testid, getByRole, getByLabel, or getByText"
 fi
 
 echo "✅ Pattern consistency checks complete"
@@ -334,6 +370,53 @@ If component test exists but no unit test:
 
 If unit test exists but no integration test:
 → Add narrow integration test for repository
+```
+
+### Test Flakiness (see [test-flakiness.md](../rules/test-flakiness.md))
+
+**Hard-Coded Waits**
+```typescript
+// BAD: Hard-coded sleep (flaky)
+await page.waitForTimeout(3000);
+await new Promise(resolve => setTimeout(resolve, 2000));
+
+// GOOD: Condition-based waits
+await page.waitForSelector('[data-testid="success"]', { state: 'visible' });
+await expect(page.getByTestId('loading')).not.toBeVisible();
+```
+
+**Missing Awaits**
+```typescript
+// BAD: Missing await (race condition)
+page.click('[data-testid="submit"]');
+expect(page.getByText('Success')).toBeVisible();
+
+// GOOD: Proper async/await
+await page.click('[data-testid="submit"]');
+await expect(page.getByText('Success')).toBeVisible();
+```
+
+**Brittle Selectors**
+```typescript
+// BAD: Brittle CSS selectors
+await page.click('.btn.btn-primary.mt-4');
+await page.click('div > div > button:nth-child(2)');
+
+// GOOD: Semantic, stable selectors
+await page.click('[data-testid="submit-button"]');
+await page.getByRole('button', { name: /submit/i }).click();
+```
+
+**Shared Test Data**
+```typescript
+// BAD: Shared data between tests
+const testUser = { email: 'test@example.com' };
+
+// GOOD: Unique data per test
+const user = { email: `test-${Date.now()}@example.com` };
+
+// BEST: Test data tracking with cleanup
+await userService.registerAndTrackUser({ email: `test-${uuid()}@example.com` });
 ```
 
 ## Next Steps
