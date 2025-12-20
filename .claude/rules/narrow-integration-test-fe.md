@@ -179,6 +179,128 @@ describe("Narrow Integration Test: useRegistration Hook", () => {
 3. **Error Handling Tests**: Test both hook error state and error services
 4. **Input Management Tests**: Test form state and validation clearing
 
+## Interaction Verification vs State Verification
+
+### Prefer State Verification (Robust)
+
+Narrow integration tests for hooks should focus on **observable hook state** that components consume, not implementation details.
+
+**Good - State-focused:**
+```typescript
+it('should successfully complete login flow', async () => {
+  // Arrange
+  mockAuthRepository.login.mockResolvedValue(mockLoginResponse);
+  const { result } = renderHook(() => useLogin({ loginUserUseCase }));
+
+  // Act
+  await act(async () => {
+    await result.current.login({ email: 'test@example.com', password: 'pass' });
+  });
+
+  // Assert - Focus on hook state
+  expect(result.current.isSuccess).toBe(true);
+  expect(result.current.loginResponse).toEqual(mockLoginResponse);
+  expect(result.current.error).toBeNull();
+  expect(result.current.isLoading).toBe(false);
+});
+```
+
+**Avoid - Over-specified interaction verification:**
+```typescript
+// Too brittle - couples to implementation
+expect(mockAuthRepository.login).toHaveBeenCalledTimes(1);
+expect(mockAuthRepository.login).toHaveBeenCalledWith({
+  email: 'test@example.com',
+  password: 'pass'
+});
+expect(mockNotificationClient.showSuccess).toHaveBeenCalledWith(
+  'Login successful! Welcome back.'
+);
+```
+
+### When to Verify Interactions (Minimal)
+
+Verify interactions ONLY for:
+1. **Critical side effects** - Navigation, logout, etc.
+2. **User-visible effects** - Notifications (verify it was called, not exact message)
+3. **Minimal verification** - Just that it happened, not parameters
+
+**Acceptable minimal verification:**
+```typescript
+// Critical navigation
+expect(mockNavigationClient.navigateTo).toHaveBeenCalledWith('/dashboard');
+
+// User-visible notification (flexible message matching)
+expect(mockNotificationClient.showSuccess).toHaveBeenCalledWith(
+  expect.stringContaining('success')
+);
+
+// Repository was called (don't verify exact params)
+expect(mockAuthRepository.login).toHaveBeenCalled();
+```
+
+### Test Organization
+
+Group tests by purpose:
+
+```typescript
+describe('State transitions', () => {
+  // Test hook state changes through lifecycle
+  it('should initialize with default state', () => { ... });
+  it('should transition through loading and success states', async () => { ... });
+  it('should handle error state transitions', async () => { ... });
+});
+
+describe('Service integration', () => {
+  // Minimal verification that services are called
+  it('should call repository when action is triggered', async () => {
+    expect(mockRepository.action).toHaveBeenCalled();
+  });
+
+  it('should navigate on success', async () => {
+    expect(mockNavigationClient.navigateTo).toHaveBeenCalledWith('/expected-route');
+  });
+});
+
+describe('Error handling', () => {
+  // Focus on how hook state reflects different error scenarios
+  it('should handle 401 errors', async () => {
+    expect(result.current.error).toBe('Invalid credentials');
+  });
+});
+```
+
+### Anti-Patterns
+
+```typescript
+// ❌ BAD: Testing exact call count
+expect(mockService.method).toHaveBeenCalledTimes(1);
+
+// ❌ BAD: Testing exact parameters
+expect(mockService.method).toHaveBeenCalledWith(exactObject);
+
+// ❌ BAD: Testing exact notification messages
+expect(mockNotificationClient.showSuccess).toHaveBeenCalledWith('Exact message');
+
+// ✅ GOOD: Testing hook state
+expect(result.current.isSuccess).toBe(true);
+
+// ✅ GOOD: Minimal interaction for critical effects
+expect(mockNavigationClient.navigateTo).toHaveBeenCalled();
+
+// ✅ GOOD: Flexible message matching for notifications
+expect(mockNotificationClient.showSuccess).toHaveBeenCalledWith(
+  expect.stringContaining('success')
+);
+```
+
+### Benefits
+
+1. **Refactor-friendly**: Change implementation without breaking tests
+2. **Focus on behavior**: Tests verify what users care about (hook state)
+3. **Less brittle**: Don't break when adding logging, analytics, etc.
+4. **Clearer intent**: Tests show what state changes matter
+
 ## What These Tests Are NOT
 
 - **Not Unit Tests**: They integrate hook with real Use Case
