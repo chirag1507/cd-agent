@@ -101,6 +101,9 @@ function add(a: number, b: number): number {
 When implementing, respect layer boundaries:
 
 ### Backend Use Case Implementation
+
+For technical services (tokens, email, SMS, payments), see [infrastructure-services.md](../rules/infrastructure-services.md)
+
 ```typescript
 export class RegisterUserUseCase {
   constructor(

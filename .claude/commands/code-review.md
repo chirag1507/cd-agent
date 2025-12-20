@@ -29,10 +29,11 @@ $ARGUMENTS
 - [ ] Result types for error handling
 - [ ] Cross-cutting concerns via decorators (not in use case)
 
-**Infrastructure Layer**
+**Infrastructure Layer** (see [infrastructure-services.md](../rules/infrastructure-services.md))
 - [ ] Implements domain interfaces
 - [ ] Handles technical concerns (DB, HTTP, etc.)
 - [ ] Mappers for domain ↔ persistence conversion
+- [ ] Technical services use Port/Adapter pattern (tokens, email, SMS, payments)
 
 **Presentation Layer** (see [controller-pattern-be.md](../rules/controller-pattern-be.md))
 - [ ] DTOs for request/response
