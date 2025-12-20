@@ -102,6 +102,24 @@ $ARGUMENTS
 - [ ] Good error messages
 - [ ] Observable behavior
 
+### 5. Pattern Consistency
+
+**Controller Pattern** (Backend)
+- [ ] All routes use HttpRequest.fromExpress() / HttpResponse.fromExpress()
+- [ ] All controllers use semantic HTTP methods (created, ok, badRequest, etc.)
+- [ ] Error mapping uses instanceof (not string matching)
+- [ ] No direct res.status() calls in controllers
+
+**Port/Adapter Pattern**
+- [ ] Use cases depend on interfaces (ports), not concrete implementations
+- [ ] Infrastructure implements all required interfaces (adapters)
+- [ ] No business logic in infrastructure adapters
+
+**Component Hierarchy** (Frontend - if using Atomic Design)
+- [ ] Components placed in correct atomic level (atoms/molecules/organisms/templates)
+- [ ] No atoms importing from molecules/organisms
+- [ ] Feature components in features/<feature>/components/
+
 ## Review Process
 
 ### Step 1: Understand Context
@@ -128,6 +146,61 @@ For each file:
 1. Does it belong in the right layer?
 2. Does it follow the patterns for that layer?
 3. Is it properly tested?
+
+### Step 4.5: Pattern Consistency Checks
+
+Run automated consistency checks:
+
+```bash
+# Backend: Check for old HTTP wrapper pattern
+echo "🔍 Checking HTTP wrapper usage..."
+OLD_HTTP_REQUEST=$(git grep -n "new HttpRequest(req)" src/ 2>/dev/null | grep -v "fromExpress" || true)
+OLD_HTTP_RESPONSE=$(git grep -n "new HttpResponse(res)" src/ 2>/dev/null | grep -v "fromExpress" || true)
+
+if [ ! -z "$OLD_HTTP_REQUEST" ] || [ ! -z "$OLD_HTTP_RESPONSE" ]; then
+  echo "❌ Found old HTTP wrapper pattern:"
+  [ ! -z "$OLD_HTTP_REQUEST" ] && echo "$OLD_HTTP_REQUEST"
+  [ ! -z "$OLD_HTTP_RESPONSE" ] && echo "$OLD_HTTP_RESPONSE"
+  echo "   Fix: Use HttpRequest.fromExpress(req) / HttpResponse.fromExpress(res)"
+fi
+
+# Backend: Check for manual status codes (should use semantic methods)
+echo "🔍 Checking for manual status codes..."
+MANUAL_STATUS=$(git grep -n "\.status(" src/ | grep -v "test\|spec\|expect\|mockResolvedValue" || true)
+
+if [ ! -z "$MANUAL_STATUS" ]; then
+  echo "⚠️  Found manual status codes:"
+  echo "$MANUAL_STATUS"
+  echo "   Fix: Use httpResponse.ok/created/badRequest/unauthorized/etc."
+fi
+
+# Backend: Check for instanceof error handling
+echo "🔍 Checking error handling pattern..."
+ERROR_STRINGS=$(git grep -n "error\.message\.includes\|error\.message\.contains" src/ | grep -v test || true)
+
+if [ ! -z "$ERROR_STRINGS" ]; then
+  echo "❌ Found string-based error detection:"
+  echo "$ERROR_STRINGS"
+  echo "   Fix: Use 'error instanceof SpecificError' instead"
+fi
+
+# Frontend: Check for wrong atomic levels (atoms importing molecules)
+echo "🔍 Checking atomic design hierarchy..."
+ATOM_VIOLATIONS=$(git grep -l "from.*molecules\|from.*organisms" src/shared/components/atoms/ 2>/dev/null || true)
+
+if [ ! -z "$ATOM_VIOLATIONS" ]; then
+  echo "❌ Atoms importing from higher levels:"
+  echo "$ATOM_VIOLATIONS"
+  echo "   Fix: Atoms should only import from other atoms or primitives"
+fi
+
+echo "✅ Pattern consistency checks complete"
+```
+
+**If violations found:**
+- Document in review under "PATTERN VIOLATIONS" section
+- Add to Priority 1 (must fix) if breaking architectural rules
+- Add to Priority 2 (should fix) if inconsistency with new patterns
 
 ### Step 5: Document Findings
 
@@ -217,6 +290,30 @@ res.status(409).json(error);
 // GOOD: Semantic HTTP methods
 httpResponse.created(data);
 httpResponse.conflict(error);
+```
+
+### Pattern Violations
+
+**Old HTTP Wrapper Usage**
+```typescript
+// BAD: Direct instantiation (old pattern)
+const httpRequest = new HttpRequest(req);
+const httpResponse = new HttpResponse(res);
+
+// GOOD: Static factory method (new pattern)
+const httpRequest = HttpRequest.fromExpress(req);
+const httpResponse = HttpResponse.fromExpress(res);
+```
+
+**Atomic Design Violations**
+```typescript
+// BAD: Atom importing from Molecule
+// src/shared/components/atoms/Button/Button.tsx
+import { SearchBar } from '../../molecules/SearchBar';
+
+// GOOD: Atom importing from Atom
+// src/shared/components/atoms/Button/Button.tsx
+import { Icon } from '../../atoms/Icon';
 ```
 
 ### Test Issues
