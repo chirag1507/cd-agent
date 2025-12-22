@@ -565,6 +565,9 @@ Each feature follows this strict order:
 | `/commit` | Ship | Conventional commit |
 | `/ship` | Ship | Merge to main |
 | `/code-review` | Quality | Domain-specific review |
+| `/commit-stage` | CI/CD | Set up commit stage workflow |
+| `/release-stage` | CI/CD | Set up release stage workflow |
+| `/acceptance-stage` | CI/CD | Set up acceptance stage workflow |
 
 ---
 

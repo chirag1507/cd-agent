@@ -113,6 +113,14 @@ cp cd-agent/CLAUDE.md your-project/
 | `/ship` | Merge to main |
 | `/code-review` | Review for XP/CD best practices |
 
+### CI/CD Pipeline
+
+| Command | Purpose |
+|---------|---------|
+| `/commit-stage` | Set up commit stage workflow (tests, builds, Docker) |
+| `/release-stage` | Set up release stage workflow (deploy to environments) |
+| `/acceptance-stage` | Set up acceptance stage workflow (system tests) |
+
 ## Test Pyramid
 
 CD-Agent enforces a comprehensive test strategy:

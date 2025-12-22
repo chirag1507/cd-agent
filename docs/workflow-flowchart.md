@@ -265,6 +265,8 @@ This flowchart shows the complete CD-Agent development workflow, from feature in
 
 ## 4. CI/CD Pipeline Flow
 
+> **💡 Tip**: Use `/commit-stage`, `/release-stage`, and `/acceptance-stage` commands to automate setup of these workflows in your project.
+
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │                              CI/CD PIPELINE FLOW                                 │
@@ -407,8 +409,12 @@ This flowchart shows the complete CD-Agent development workflow, from feature in
 
 | Phase | Command | Purpose |
 |-------|---------|---------|
+| Strategy | `/vision` | Define product vision and goals |
 | Discovery | `/plan` | Break feature into TDD-ready tasks |
 | Exploration | `/spike` | Technical exploration (throwaway) |
+| ATDD | `/acceptance-test` | Write Executable Specification |
+| ATDD | `/dsl` | Implement DSL layer |
+| ATDD | `/driver` | Implement Protocol Driver |
 | TDD | `/red` | Write ONE failing test |
 | TDD | `/green` | Minimal implementation |
 | TDD | `/refactor` | Improve structure |
@@ -416,6 +422,9 @@ This flowchart shows the complete CD-Agent development workflow, from feature in
 | Ship | `/commit` | Conventional commit |
 | Ship | `/ship` | Merge to main |
 | Quality | `/code-review` | Domain review |
+| CI/CD | `/commit-stage` | Set up commit stage workflow |
+| CI/CD | `/release-stage` | Set up release stage workflow |
+| CI/CD | `/acceptance-stage` | Set up acceptance stage workflow |
 
 ---
 
