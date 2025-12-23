@@ -121,6 +121,12 @@ cp cd-agent/CLAUDE.md your-project/
 | `/release-stage` | Set up release stage workflow (deploy to environments) |
 | `/acceptance-stage` | Set up acceptance stage workflow (system tests) |
 
+### Maintenance
+
+| Command | Purpose |
+|---------|---------|
+| `/dependency-review` | Review dependencies and generate gradual update plan |
+
 ## Test Pyramid
 
 CD-Agent enforces a comprehensive test strategy:

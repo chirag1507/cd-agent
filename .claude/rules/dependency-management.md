@@ -367,13 +367,14 @@ pnpm add @types/node@latest  # Not types-node
 
 Commands that install dependencies should follow these rules:
 - `/cd-init` - Initial project setup with @latest
+- `/dependency-review` - Manual update planning with gradual execution
 - `/spike` - When adding experimental packages with @latest
 - `/cycle` - When TDD cycle requires new packages with @latest
-- Dependency review command - Manual update planning
 - CI/CD pipelines - Use frozen lockfile
 
 ## See Also
 
 - [/cd-init](../commands/cd-init.md) - Project initialization
+- [/dependency-review](../commands/dependency-review.md) - Dependency review and gradual update planning
 - [CLAUDE.md](../../CLAUDE.md) - Project tech stack
 - [commit-stage-pipeline.md](commit-stage-pipeline.md) - CI dependency installation

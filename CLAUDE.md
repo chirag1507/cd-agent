@@ -552,6 +552,7 @@ Each feature follows this strict order:
 
 | Command | Phase | Purpose |
 |---------|-------|---------|
+| `/cd-init [type]` | Setup | Initialize project structure |
 | `/vision` | Strategy | Define product vision and goals |
 | `/plan` | Discovery | Break feature into TDD-ready tasks |
 | `/spike` | Exploration | Technical exploration (disposable code) |
@@ -568,6 +569,7 @@ Each feature follows this strict order:
 | `/commit-stage` | CI/CD | Set up commit stage workflow |
 | `/release-stage` | CI/CD | Set up release stage workflow |
 | `/acceptance-stage` | CI/CD | Set up acceptance stage workflow |
+| `/dependency-review` | Maintenance | Review dependencies and generate gradual update plan |
 
 ---
 
