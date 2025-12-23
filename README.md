@@ -46,7 +46,7 @@ cp cd-agent/CLAUDE.md your-project/
    - Domain concepts and bounded contexts
    - Team conventions
 
-2. **Initialize project structure** (or use `/init` command in Claude):
+2. **Initialize project structure** (or use `/cd-init` command in Claude):
    ```bash
    pnpm init
    pnpm add -D typescript jest ts-jest @types/jest
@@ -78,7 +78,7 @@ cp cd-agent/CLAUDE.md your-project/
 
 | Command | Purpose |
 |---------|---------|
-| `/init [type]` | Initialize project structure (backend/frontend/fullstack/system-tests) |
+| `/cd-init [type]` | Initialize project structure (backend/frontend/fullstack/system-tests) |
 
 ### Discovery & Planning
 

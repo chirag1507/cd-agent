@@ -3,7 +3,7 @@ description: Initialize a new project with CD-Agent structure and dependencies
 argument-hint: [project-type: backend, frontend, fullstack]
 ---
 
-# Initialize Project
+# /cd-init - Initialize Project
 
 $ARGUMENTS
 
