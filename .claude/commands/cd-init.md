@@ -130,46 +130,48 @@ acceptance/
 
 ### Step 4: Install Dependencies
 
+**CRITICAL: Always install latest stable versions using `@latest` tag**
+
 **Backend:**
 ```bash
-pnpm add express
-pnpm add -D typescript @types/node @types/express
-pnpm add -D jest ts-jest @types/jest
-pnpm add -D @pact-foundation/pact
-pnpm add -D eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
-pnpm add -D prettier eslint-config-prettier
-pnpm add -D supertest @types/supertest
+pnpm add express@latest
+pnpm add -D typescript@latest @types/node@latest @types/express@latest
+pnpm add -D jest@latest ts-jest@latest @types/jest@latest
+pnpm add -D @pact-foundation/pact@latest
+pnpm add -D eslint@latest @typescript-eslint/parser@latest @typescript-eslint/eslint-plugin@latest
+pnpm add -D prettier@latest eslint-config-prettier@latest
+pnpm add -D supertest@latest @types/supertest@latest
 ```
 
 **Frontend (Next.js + shadcn/ui + Tailwind):**
 ```bash
-# Create Next.js app with TypeScript
+# Create Next.js app with TypeScript (already uses @latest)
 pnpm create next-app@latest . --typescript --tailwind --eslint --app --src-dir
 
 # Testing
-pnpm add -D jest jest-environment-jsdom @testing-library/react @testing-library/jest-dom @testing-library/user-event
-pnpm add -D @types/jest ts-jest
+pnpm add -D jest@latest jest-environment-jsdom@latest @testing-library/react@latest @testing-library/jest-dom@latest @testing-library/user-event@latest
+pnpm add -D @types/jest@latest ts-jest@latest
 
 # Contract testing
-pnpm add -D @pact-foundation/pact
+pnpm add -D @pact-foundation/pact@latest
 
 # shadcn/ui setup
-pnpm add tailwindcss-animate class-variance-authority clsx tailwind-merge
-pnpm add lucide-react
+pnpm add tailwindcss-animate@latest class-variance-authority@latest clsx@latest tailwind-merge@latest
+pnpm add lucide-react@latest
 pnpm dlx shadcn@latest init
 
-# Add common shadcn components
+# Add common shadcn components (shadcn CLI manages versions)
 pnpm dlx shadcn@latest add button card input
 
 # Formatting
-pnpm add -D prettier eslint-config-prettier
+pnpm add -D prettier@latest eslint-config-prettier@latest
 ```
 
 **System Tests:**
 ```bash
-pnpm add -D @cucumber/cucumber
-pnpm add -D @playwright/test playwright
-pnpm add -D typescript ts-node @types/node
+pnpm add -D @cucumber/cucumber@latest
+pnpm add -D @playwright/test@latest playwright@latest
+pnpm add -D typescript@latest ts-node@latest @types/node@latest
 ```
 
 ### Step 5: Create Config Files
@@ -368,6 +370,7 @@ Happy coding with discipline! 🎯
 ## Important Notes
 
 - Always use pnpm unless user specifies otherwise
+- **CRITICAL: Always install latest stable versions using `@latest` tag** (e.g., `pnpm add express@latest`)
 - Create minimal starter files, not boilerplate
 - Don't create example code - let user drive with TDD
 - Ensure all paths in tsconfig match the structure
