@@ -22,37 +22,125 @@ Set up a new TypeScript project with all the tooling needed for TDD and Continuo
 
 ## Initialization Steps
 
-### Step 1: Confirm Project Details
+### Step 1: Confirm Project Details and Frontend Context
+
+**1.1 Basic Project Information**
 
 Ask user to confirm:
 - Project name
 - Project type (backend/frontend/fullstack/system-tests)
 - Package manager preference (pnpm recommended)
 
-**IMPORTANT: For Backend-Only Projects with Existing Frontend**
+**1.2 Interactive Frontend Context Discovery (Backend Projects Only)**
 
-If initializing a backend project where the frontend already exists, ask the user:
+If project type is **backend**, ask the following questions to understand the context:
 
-1. **"Do you have existing frontend screenshots or UI designs?"**
-   - If yes, user can share screenshots to help understand expected API behavior
-   - Screenshots provide visual context for API response structures
-   - Store in `docs/frontend-reference/screenshots/` for reference during planning
+**Question 1: "Does a frontend already exist for this backend?"**
 
-2. **"Do you have existing API contracts or interface specifications?"**
-   - If yes, user can share:
-     - OpenAPI/Swagger specifications
-     - GraphQL schemas
-     - Pact consumer contracts from the frontend team
-     - API documentation or endpoint specifications
-   - Store in `docs/frontend-reference/contracts/` for reference
-   - These contracts will guide provider contract test implementation
+Options:
+- **A) No, I'm building both frontend and backend** → Suggest using `/cd-init fullstack` instead
+- **B) Yes, frontend exists and I have access to it** → Continue to Question 2
+- **C) Yes, but it's a third-party frontend (not under my control)** → Skip to Step 2, note in project README
+- **D) Not sure yet / Will decide later** → Skip to Step 2, can add FE reference materials later
 
-**Why this matters:**
-- Screenshots help understand user workflows and expected data structures
-- Contracts provide concrete API expectations that backend must fulfill
-- Reduces back-and-forth during development
-- Enables Contract-First development approach
-- Provider tests can verify against pre-existing consumer contracts
+---
+
+**If Answer = B (Frontend exists and accessible), ask Question 2:**
+
+**Question 2: "Is the frontend project in your current VSCode workspace?"**
+
+💡 **RECOMMENDATION**: Adding the frontend project to your workspace will significantly improve my ability to:
+- Analyze existing API calls and data structures
+- Understand UI workflows and user interactions
+- Generate accurate API contracts automatically
+- Provide better context-aware suggestions
+- Reduce errors and misalignment
+
+Options:
+- **Yes, frontend is in workspace** → I can analyze it directly
+- **No, but I can add it** → Please add frontend project folder to workspace, then I'll analyze it
+- **No, I'll provide screenshots/contracts manually** → Continue to Question 3
+
+---
+
+**If frontend not in workspace, ask Question 3:**
+
+**Question 3: "What frontend reference materials do you have?"**
+
+Select all that apply:
+- **a) Screenshots or UI designs** → I'll ask you to share them
+- **b) Pact consumer contracts** → I'll ask you to share them
+- **c) OpenAPI/Swagger specifications** → I'll ask you to share them
+- **d) API documentation or examples** → I'll ask you to share them
+- **e) Frontend codebase is available but not Pact-enabled** → I'll guide you to retrofit Pact consumer tests first
+- **f) None of the above** → I'll help you document API requirements as we go
+
+---
+
+**Based on answers, take appropriate action:**
+
+- **If frontend in workspace**: Analyze frontend codebase for API calls and data structures
+- **If screenshots provided**: Store in `docs/frontend-reference/screenshots/`, create README.md index
+- **If contracts provided**: Store in `docs/frontend-reference/contracts/`, categorize by type
+- **If frontend code available but no Pact**:
+  - Explain Scenario B from [contract-test-provider.md](../rules/contract-test-provider.md)
+  - Recommend retrofitting Pact consumer tests in frontend first
+  - Provide step-by-step guidance
+- **If third-party frontend**: Note API requirements in `docs/api-requirements.md`
+
+**Post-Initialization Note**: If you skip this now or answer "Not sure yet", you can always add frontend reference materials later using the guidance in Step 1.3 below.
+
+---
+
+**1.3 Adding Frontend Reference Materials to Existing Backend Project**
+
+If you already initialized the backend project and now want to add frontend reference materials:
+
+**Step 1: Create the directory structure**
+
+```bash
+mkdir -p docs/frontend-reference/screenshots
+mkdir -p docs/frontend-reference/contracts/pact
+```
+
+**Step 2: Add reference materials**
+
+Follow the same interactive questions from Step 1.2 above:
+
+1. **Add frontend to workspace** (recommended):
+   - File → Add Folder to Workspace → Select frontend project folder
+   - Inform me that frontend is now in workspace
+   - I can now analyze API calls, data structures, and UI workflows
+
+2. **Or provide screenshots**:
+   - Save screenshots to `docs/frontend-reference/screenshots/`
+   - Create `docs/frontend-reference/screenshots/README.md`:
+     ```markdown
+     # Frontend UI Screenshots
+
+     ## Registration Flow
+     - `registration-form.png` - User registration form with email, password, name fields
+     - `registration-success.png` - Success message after registration
+     - `registration-error.png` - Error states (invalid email, weak password, etc.)
+
+     ## Dashboard
+     - `dashboard-overview.png` - Main dashboard view showing user data
+     ```
+
+3. **Or provide contracts**:
+   - **Pact contracts**: Copy to `docs/frontend-reference/contracts/pact/`
+   - **OpenAPI specs**: Save as `docs/frontend-reference/contracts/openapi.yaml`
+   - **API docs**: Create `docs/frontend-reference/contracts/README.md`
+
+**Step 3: Inform the agent**
+
+Tell me: "I've added frontend reference materials" and I'll:
+- Review the materials
+- Update my understanding of API requirements
+- Guide implementation to match frontend expectations
+- Help retrofit Pact consumer tests if frontend code is available
+
+---
 
 ### Step 2: Create Directory Structure
 
