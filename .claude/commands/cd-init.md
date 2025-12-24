@@ -29,6 +29,31 @@ Ask user to confirm:
 - Project type (backend/frontend/fullstack/system-tests)
 - Package manager preference (pnpm recommended)
 
+**IMPORTANT: For Backend-Only Projects with Existing Frontend**
+
+If initializing a backend project where the frontend already exists, ask the user:
+
+1. **"Do you have existing frontend screenshots or UI designs?"**
+   - If yes, user can share screenshots to help understand expected API behavior
+   - Screenshots provide visual context for API response structures
+   - Store in `docs/frontend-reference/screenshots/` for reference during planning
+
+2. **"Do you have existing API contracts or interface specifications?"**
+   - If yes, user can share:
+     - OpenAPI/Swagger specifications
+     - GraphQL schemas
+     - Pact consumer contracts from the frontend team
+     - API documentation or endpoint specifications
+   - Store in `docs/frontend-reference/contracts/` for reference
+   - These contracts will guide provider contract test implementation
+
+**Why this matters:**
+- Screenshots help understand user workflows and expected data structures
+- Contracts provide concrete API expectations that backend must fulfill
+- Reduces back-and-forth during development
+- Enables Contract-First development approach
+- Provider tests can verify against pre-existing consumer contracts
+
 ### Step 2: Create Directory Structure
 
 **For Backend:**
@@ -55,6 +80,14 @@ src/
 │   └── __tests__/
 │       ├── builders/
 │       └── component/
+docs/
+└── frontend-reference/         # (Only if frontend exists separately)
+    ├── screenshots/            # UI screenshots for context
+    │   └── README.md          # Index of screenshots with descriptions
+    └── contracts/             # API contracts from frontend
+        ├── openapi.yaml       # OpenAPI/Swagger specs (if available)
+        ├── pact/              # Pact consumer contracts (if available)
+        └── README.md          # Contract documentation
 ```
 
 **For Frontend (Next.js + Clean Architecture + Atomic Design):**

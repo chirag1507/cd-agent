@@ -13,6 +13,35 @@ $ARGUMENTS
 
 (If no input provided, check conversation context or ask for feature details)
 
+**IMPORTANT: Leverage Frontend Reference Materials (If Available)**
+
+Before starting the planning process, check if frontend reference materials exist:
+
+1. **Check for Frontend Screenshots**: `docs/frontend-reference/screenshots/`
+   - If screenshots exist, review them to understand:
+     - User interface layouts and workflows
+     - Form fields and their expected validation
+     - Data displayed to users (informs API response structures)
+     - User interactions and state transitions
+   - Use screenshots to ask better questions about behavior
+   - Reference specific UI elements when documenting examples
+
+2. **Check for API Contracts**: `docs/frontend-reference/contracts/`
+   - If contracts exist (OpenAPI, Pact, GraphQL schemas), review them to understand:
+     - Expected API endpoints and HTTP methods
+     - Request/response payload structures
+     - Required vs optional fields
+     - Data types and validation rules
+     - Error response formats
+   - Use contracts as a starting point for behavioral scenarios
+   - Ensure planned implementation matches contract expectations
+
+**Why this matters:**
+- Screenshots provide visual context for "what the user sees"
+- Contracts provide technical specification for "what the API must do"
+- Together, they bridge the gap between user experience and backend implementation
+- Reduces ambiguity and prevents rework
+
 ## Process
 
 ### Phase 1: Understand the Feature

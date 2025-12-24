@@ -6,12 +6,201 @@
 
 Honor consumer contracts by verifying the provider can fulfill all consumer expectations.
 
+## Working with Pre-Existing Frontend
+
+**IMPORTANT: Three scenarios when frontend already exists:**
+
+### Scenario A: Frontend Has Pact Contracts (Built with Agent or Pact-Aware)
+
+**Situation**: Frontend team already uses Pact and has consumer contracts.
+
+**Check**: `docs/frontend-reference/contracts/pact/` or contracts in Pact Broker
+
+**Workflow**:
+1. **Import contracts** (if only local files):
+   ```bash
+   pact-broker publish \
+     docs/frontend-reference/contracts/pact/*.json \
+     --consumer-app-version=frontend-v1.0.0 \
+     --tag=main \
+     --broker-base-url=$PACT_BROKER_URL \
+     --broker-token=$PACT_BROKER_TOKEN
+   ```
+
+2. **Implement backend provider** using TDD to satisfy contracts
+3. **Verify provider** (fetch from broker)
+4. **Publish verification results**
+
+### Scenario B: Frontend Exists Without Pact (Under Our Control)
+
+**Situation**: Working frontend built without agent, no Pact contracts exist, but **we control the frontend codebase**.
+
+**Check for**:
+- API request/response examples in code or docs
+- OpenAPI/Swagger specs (if available)
+- Network traces/Postman collections
+
+**Workflow - Retrofit Pact Consumer Tests in Frontend First**:
+
+**Step 1: Generate Consumer Contracts from Existing Frontend**
+
+Go to the frontend project and add Pact consumer tests:
+
+```bash
+cd frontend-project
+pnpm add -D @pact-foundation/pact@latest
+```
+
+**Step 2: Write Pact Consumer Tests for Existing API Calls**
+
+For each API endpoint the frontend currently uses, create a Pact consumer test:
+
+```typescript
+// frontend-project/src/api/__tests__/user-api.pact.test.ts
+import { Pact } from '@pact-foundation/pact';
+import { like, eachLike } from '@pact-foundation/pact/dsl/matchers';
+import { UserApiClient } from '../user-api-client';
+
+describe('User API Pact Tests', () => {
+  const provider = new Pact({
+    consumer: 'frontend-app',
+    provider: 'backend-api',
+    port: 1234,
+    dir: path.resolve(process.cwd(), 'pacts'),
+  });
+
+  beforeAll(() => provider.setup());
+  afterEach(() => provider.verify());
+  afterAll(() => provider.finalize());
+
+  // Document existing GET /api/users/:id endpoint
+  it('should get user by ID', async () => {
+    await provider.addInteraction({
+      state: 'a user with ID 123 exists',
+      uponReceiving: 'a request to get user by ID',
+      withRequest: {
+        method: 'GET',
+        path: '/api/users/123',
+        headers: { Accept: 'application/json' }
+      },
+      willRespondWith: {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+        body: like({
+          id: '123',
+          email: 'user@example.com',
+          name: 'John Doe',
+          role: 'user'
+        })
+      }
+    });
+
+    const apiClient = new UserApiClient('http://localhost:1234');
+    const user = await apiClient.getUserById('123');
+    expect(user.id).toBe('123');
+  });
+
+  // Document existing POST /api/users endpoint
+  it('should create new user', async () => {
+    await provider.addInteraction({
+      state: 'the API is available',
+      uponReceiving: 'a request to create user',
+      withRequest: {
+        method: 'POST',
+        path: '/api/users',
+        headers: { 'Content-Type': 'application/json' },
+        body: {
+          email: 'new@example.com',
+          password: 'ValidPass123!',
+          name: 'New User'
+        }
+      },
+      willRespondWith: {
+        status: 201,
+        headers: { 'Content-Type': 'application/json' },
+        body: like({
+          id: '456',
+          email: 'new@example.com',
+          name: 'New User',
+          createdAt: '2024-01-01T00:00:00Z'
+        })
+      }
+    });
+
+    const apiClient = new UserApiClient('http://localhost:1234');
+    const user = await apiClient.createUser({
+      email: 'new@example.com',
+      password: 'ValidPass123!',
+      name: 'New User'
+    });
+    expect(user.id).toBeDefined();
+  });
+});
+```
+
+**Step 3: Run Consumer Tests to Generate Pact Files**
+
+```bash
+cd frontend-project
+npm run test:contract  # Generates pact/*.json files
+```
+
+**Step 4: Publish Contracts to Pact Broker**
+
+```bash
+pact-broker publish \
+  ./pacts \
+  --consumer-app-version=$(git rev-parse HEAD) \
+  --tag=main \
+  --broker-base-url=$PACT_BROKER_URL \
+  --broker-token=$PACT_BROKER_TOKEN
+```
+
+**Step 5: Copy Contracts to Backend Reference**
+
+```bash
+cp frontend-project/pacts/*.json backend-project/docs/frontend-reference/contracts/pact/
+```
+
+**Step 6: Build Backend Provider**
+
+Now in backend project, implement provider using TDD:
+
+1. Review contracts in `docs/frontend-reference/contracts/pact/`
+2. Implement provider to satisfy contract expectations
+3. Run provider verification tests (fetch from broker)
+4. Publish verification results
+
+**Step 7: Integrate into CI/CD**
+
+- **Frontend CI**: Publish consumer contracts on main branch push
+- **Backend CI**: Verify provider (webhook-triggered on contract changes)
+- **Deployment gate**: Use `can-i-deploy` before releases
+
+### Scenario C: Frontend Not Under Our Control (Third-Party)
+
+**Situation**: External team, no Pact contracts, only API documentation.
+
+**Workflow**:
+1. Use API specs to create provider tests manually
+2. Implement backend to specification
+3. Manual integration testing
+4. Recommend Pact to external team for future collaboration
+
+### Contract-First Development Benefits
+
+- Backend guided by **real** consumer needs (not assumptions)
+- Prevents breaking existing frontend
+- Parallel development possible
+- Clear API specification before implementation
+- Integration issues caught early
+
 ## Non-Negotiable Rules
 
 ### 1. Fetch Contracts from Pact Broker Only
 
-- No manual contract file sharing
-- Broker is single source of truth
+- No manual contract file sharing (except initial import)
+- Broker is single source of truth after initial setup
 - CI automatically fetches latest contracts
 
 ### 2. State Handlers Are Critical

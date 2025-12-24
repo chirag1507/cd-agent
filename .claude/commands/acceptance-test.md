@@ -9,6 +9,32 @@ $ARGUMENTS
 
 (If no input provided, check conversation context for the behavior to specify)
 
+**IMPORTANT: Leverage Frontend Screenshots (If Available)**
+
+Before writing acceptance tests, check if frontend reference materials exist:
+
+**Check `docs/frontend-reference/screenshots/`**:
+- If screenshots exist, use them to understand:
+  - What the user sees and interacts with
+  - Form fields, buttons, and navigation elements
+  - Success/error states and messages
+  - Data displayed to users (helps define expected API responses)
+
+**How to use screenshots in acceptance tests**:
+1. **Understand user workflows**: Screenshots show the complete user journey
+2. **Identify behavioral variants**: Different UI states reveal edge cases and error scenarios
+3. **Define expected outcomes**: Visual feedback guides "Then" assertions
+4. **Write domain language**: Translate UI elements into problem-domain concepts
+   - Instead of "click submit button" → "complete registration"
+   - Instead of "form shows error" → "registration is rejected due to invalid email"
+
+**Example**: If screenshot shows a registration form with email, password, and name fields, and a "Create Account" button:
+- Use case: User wants to create an account
+- Happy path: Valid inputs → Success message → Redirect to dashboard
+- Error cases: Invalid email format, weak password, duplicate email
+
+Screenshots help bridge the gap between "what the UI shows" and "what the system does" without coupling tests to UI implementation details.
+
 ## Purpose
 
 Write a Test Case that serves as an **Executable Specification** for the behavior. This is Layer 1 of Dave Farley's Four-Layer Model.
