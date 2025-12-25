@@ -91,14 +91,18 @@ function init(options = {}) {
     process.exit(1);
   }
 
-  // Copy docs directory
-  if (fs.existsSync(DOCS_DIR)) {
+  // Copy workflow-flowchart.md from docs directory
+  const workflowFile = path.join(DOCS_DIR, 'workflow-flowchart.md');
+  if (fs.existsSync(workflowFile)) {
     const docsTarget = path.join(targetDir, 'docs');
-    copyDir(DOCS_DIR, docsTarget);
-    const docCount = fs.readdirSync(DOCS_DIR).filter(f => f.endsWith('.md')).length;
-    console.log(`✓ Copied ${docCount} documentation files to docs/`);
+    if (!fs.existsSync(docsTarget)) {
+      fs.mkdirSync(docsTarget, { recursive: true });
+    }
+    const workflowTarget = path.join(docsTarget, 'workflow-flowchart.md');
+    fs.copyFileSync(workflowFile, workflowTarget);
+    console.log('✓ Copied workflow-flowchart.md to docs/');
   } else {
-    console.log('⚠ Documentation directory not found, skipping');
+    console.log('⚠ workflow-flowchart.md not found, skipping');
   }
 
   // Copy CLAUDE.md if requested
