@@ -144,6 +144,40 @@ If yes:
 
 Based on user input, generate the appropriate workflow file. See [commit-stage-pipeline.md](../rules/commit-stage-pipeline.md) for pipeline rules and best practices.
 
+**CRITICAL: pnpm Installation Order**
+
+When using pnpm as the package manager, pnpm MUST be installed BEFORE setting up Node.js with cache. This is because `cache: 'pnpm'` in `setup-node` requires pnpm to already be available.
+
+✅ **Correct Order:**
+```yaml
+- name: Install pnpm
+  uses: pnpm/action-setup@v2
+  with:
+    version: 8
+
+- name: Setup Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: '22'
+    cache: 'pnpm'  # Now pnpm is available
+```
+
+❌ **Wrong Order (causes error):**
+```yaml
+- name: Setup Node.js
+  uses: actions/setup-node@v4
+  with:
+    node-version: '22'
+    cache: 'pnpm'  # ❌ Error: pnpm not found
+
+- name: Install pnpm
+  uses: pnpm/action-setup@v2
+  with:
+    version: 8
+```
+
+Note: This only applies to pnpm. npm and yarn are pre-installed in GitHub Actions runners.
+
 ### Frontend Template
 
 ```yaml
@@ -166,6 +200,13 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      # [PNPM SETUP - conditional based on package manager]
+      - name: Install pnpm
+        if: '<PACKAGE_MANAGER>' == 'pnpm'
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -267,6 +308,13 @@ jobs:
         steps:
             - name: Checkout Code
               uses: actions/checkout@v4
+
+            # [PNPM SETUP - conditional based on package manager]
+            - name: Install pnpm
+              if: '<PACKAGE_MANAGER>' == 'pnpm'
+              uses: pnpm/action-setup@v2
+              with:
+                  version: 8
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
