@@ -194,15 +194,180 @@ If database selected:
 ```
 
 ### 9. Contract Testing
+
 ```
 Does this project use Pact for contract testing?
 [Y/n]
+```
 
-If yes:
-- Is this a Consumer or Provider?
-  1. Consumer (Frontend/API Client)
-  2. Provider (Backend/API Server)
-  3. Both
+**If yes, determine role:**
+
+```
+Is this a Consumer or Provider?
+1. Consumer (Frontend/API Client)
+2. Provider (Backend/API Server)
+3. Both
+
+[User selects option]
+```
+
+#### Consumer (Frontend/API Client) Configuration
+
+**Consumer workflow:**
+- ✅ Generate contracts locally (consumer tests)
+- ✅ Publish to Pact Broker
+- ❌ Do NOT verify provider
+
+**Configuration:**
+- Contracts generated in `./pacts` directory
+- Publish via `pact-broker publish` command
+- Requires: `PACT_BROKER_BASE_URL`, `PACT_BROKER_TOKEN`
+
+**Example Consumer Test:**
+```typescript
+// Example: UserRepository.pact.test.ts
+const provider = new Pact({
+  consumer: 'frontend-app',
+  provider: 'api-service',
+  port: 1234,
+  dir: path.resolve(process.cwd(), 'pacts'), // ← Local generation
+});
+
+await provider.addInteraction({
+  state: 'a user with ID 123 exists',
+  uponReceiving: 'a request to get user',
+  withRequest: { method: 'GET', path: '/api/users/123' },
+  willRespondWith: { status: 200, body: { id: '123', email: 'user@example.com' } }
+});
+```
+
+**Publish command (package.json):**
+```json
+{
+  "scripts": {
+    "publish:pacts": "pact-broker publish ./pacts --consumer-app-version=$GITHUB_SHA --tag=$BRANCH"
+  }
+}
+```
+
+#### Provider (Backend/API Server) Configuration
+
+**⚠️ CRITICAL: Providers fetch from Pact Broker, NOT local files**
+
+**Provider workflow:**
+- ❌ Do NOT read local pact files
+- ✅ Fetch contracts from Pact Broker
+- ✅ Verify provider meets contracts
+- ✅ Publish verification results
+
+**Required environment variables:**
+```
+PACT_BROKER_BASE_URL=https://your-pactflow.io
+PACT_BROKER_TOKEN=xxxxx (from Pact Broker/Pactflow)
+GITHUB_SHA (automatically available in GitHub Actions)
+CI=true (automatically set in GitHub Actions)
+```
+
+**Would you like to add Pact Broker configuration to your workflow?**
+```
+[Y/n]
+```
+
+**Example Provider Test Configuration:**
+```typescript
+// provider-contract.test.ts
+import { Verifier } from '@pact-foundation/pact';
+
+const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
+const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
+
+// Skip gracefully if Pact Broker not configured
+if (!pactBrokerUrl || !pactBrokerToken) {
+  console.log('⚠️  Pact Broker not configured - skipping contract verification');
+  console.log('   Set PACT_BROKER_BASE_URL and PACT_BROKER_TOKEN to enable');
+  return;
+}
+
+const verifier = new Verifier({
+  providerBaseUrl: `http://localhost:${port}`,
+  provider: '<PROJECT_NAME>',
+
+  // ✅ Fetch from Pact Broker
+  pactBrokerUrl,
+  pactBrokerToken,
+  publishVerificationResult: process.env.CI === 'true',
+  providerVersion: process.env.GITHUB_SHA || 'dev',
+
+  // Select which contracts to verify
+  consumerVersionSelectors: [
+    { mainBranch: true },           // Contracts from main branch
+    { deployedOrReleased: true },   // Contracts from deployed consumers
+  ],
+
+  stateHandlers: {
+    'a user with ID 123 exists': async () => {
+      mockUserRepository.findById.mockResolvedValue(testUser);
+    },
+    // ... other state handlers
+  },
+});
+
+await verifier.verifyProvider();
+```
+
+**Why Pact Broker is Required for Providers:**
+
+| Approach | Development | CI/CD | Independent Deployment |
+|----------|-------------|-------|------------------------|
+| **Local Files** | ✅ Works | ❌ Fails | ❌ Impossible |
+| **Pact Broker** | ✅ Works | ✅ Works | ✅ Enabled |
+
+**Local files don't work in CI because:**
+- Consumer generates contracts in their repo
+- Provider runs in different repo/pipeline
+- No way to share files between repos in CI
+- Pact Broker is the "contract registry"
+
+**Pact Broker Setup Options:**
+
+1. **Pactflow** (Recommended - Free tier available)
+   - Managed service: https://pactflow.io
+   - No infrastructure to manage
+   - Free for open source
+
+2. **Self-hosted Pact Broker**
+   - Docker: `pactfoundation/pact-broker`
+   - Requires PostgreSQL database
+   - Setup guide: https://docs.pact.io/pact_broker/docker_images
+
+**Post-configuration steps:**
+
+After choosing Provider role, display:
+
+```
+🔐 Pact Broker Configuration Required
+
+Your backend is configured as a Provider and will verify consumer contracts.
+
+**Next steps:**
+1. Set up Pact Broker or sign up for Pactflow (https://pactflow.io)
+2. Add these GitHub Secrets:
+   - PACT_BROKER_BASE_URL (e.g., https://yourcompany.pactflow.io)
+   - PACT_BROKER_TOKEN (generate from Pact Broker settings)
+
+**Until configured:**
+- Provider contract tests will skip gracefully in CI
+- Workflow will still pass (skips Pact step with warning)
+- Local development remains unaffected
+
+**Consumer (Frontend) must publish contracts first:**
+- Frontend generates contracts → publishes to Broker
+- Backend fetches contracts → verifies against them
+- This enables independent deployment! 🚀
+
+Learn more:
+- How Pact works: https://docs.pact.io/getting_started/how_pact_works
+- Provider verification: https://docs.pact.io/implementation_guides/javascript/docs/provider
 ```
 
 ### 10. Prisma ORM (Backend Only)
@@ -702,8 +867,8 @@ After creating the workflow, display:
 
 🔐 Required GitHub Secrets (if using Pact):
   Add these secrets in GitHub repository settings:
-  - PACT_BROKER_BASE_URL: https://your-pact-broker.com
-  - PACT_BROKER_TOKEN: your-token-here
+  - PACT_BROKER_BASE_URL: https://your-pact-broker.com (or https://yourcompany.pactflow.io)
+  - PACT_BROKER_TOKEN: your-token-here (generate from Pact Broker/Pactflow settings)
 
 🔐 Required GitHub Secrets (if using AWS ECR):
   - AWS_ACCESS_KEY_ID
@@ -722,6 +887,7 @@ After creating the workflow, display:
 📚 Learn more:
   - Commit Stage Pipeline Rules: .claude/rules/commit-stage-pipeline.md
   - CI/CD Pipeline Reference: reference/cd-pipeline-reference/
+  - Provider Contract Testing: .claude/rules/contract-test-provider.md
 
 🎯 What this pipeline does:
   ✓ Runs all tests (unit, component, integration, contract)
@@ -729,6 +895,54 @@ After creating the workflow, display:
   ✓ Builds Docker images (only on main branch)
   ✓ Publishes to registry (GHCR or ECR)
   ✓ Fast feedback (~5-10 minutes)
+```
+
+**If Provider role was selected, also display:**
+
+```
+⚠️  IMPORTANT: Provider Contract Testing Configuration
+
+Your backend is configured as a Provider. This means:
+
+1. ❌ DO NOT use local pact files in tests
+   - Local files won't work in CI/CD
+   - Provider must fetch from Pact Broker
+
+2. ✅ Ensure your test configuration uses Pact Broker:
+
+   // provider-contract.test.ts
+   const verifier = new Verifier({
+     pactBrokerUrl: process.env.PACT_BROKER_BASE_URL,  // ← Required
+     pactBrokerToken: process.env.PACT_BROKER_TOKEN,   // ← Required
+     publishVerificationResult: process.env.CI === 'true',
+     providerVersion: process.env.GITHUB_SHA,
+     consumerVersionSelectors: [
+       { mainBranch: true },
+       { deployedOrReleased: true },
+     ],
+   });
+
+3. ✅ Add graceful skip when Pact Broker not configured:
+
+   if (!pactBrokerUrl || !pactBrokerToken) {
+     console.log('⚠️  Pact Broker not configured - skipping');
+     return; // Test passes but skips verification
+   }
+
+4. 🔄 Workflow depends on Consumer publishing first:
+   - Consumer (Frontend) generates contracts
+   - Consumer publishes to Pact Broker
+   - Provider (Backend) fetches and verifies
+   - This enables independent deployment!
+
+5. 🔐 Set up Pact Broker:
+   - Option 1: Pactflow (https://pactflow.io) - Free tier available
+   - Option 2: Self-host with Docker (pactfoundation/pact-broker)
+
+Until Pact Broker is configured:
+  ✓ Provider tests will skip gracefully
+  ✓ CI pipeline will still pass
+  ✓ No blocking issues for development
 ```
 
 ## Validation and Safety
