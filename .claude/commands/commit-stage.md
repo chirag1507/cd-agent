@@ -32,19 +32,61 @@ git rev-parse --git-dir > /dev/null 2>&1 || echo "❌ Not a git repository"
 # 4. Check for .github/workflows directory
 mkdir -p .github/workflows
 
-# 5. Check if project uses Prisma ORM
+# 5. Check if project uses pnpm workspaces (monorepo)
+IS_MONOREPO=false
+WORKSPACE_PACKAGE_NAME=""
+SERVICE_PATH=""
+
+if [ -f "pnpm-workspace.yaml" ]; then
+  IS_MONOREPO=true
+  echo "✓ Detected pnpm workspace (monorepo)"
+
+  # Try to detect service path and package name
+  # Look for apps/*/package.json or packages/*/package.json
+  if [ -d "apps" ]; then
+    # Find first service in apps/
+    SERVICE_DIR=$(find apps -maxdepth 1 -type d | grep -v '^apps$' | head -1)
+    if [ -n "$SERVICE_DIR" ]; then
+      SERVICE_NAME=$(basename "$SERVICE_DIR")
+      SERVICE_PATH="apps/$SERVICE_NAME"
+
+      # Extract package name from package.json
+      if [ -f "$SERVICE_PATH/package.json" ]; then
+        WORKSPACE_PACKAGE_NAME=$(jq -r '.name' "$SERVICE_PATH/package.json" 2>/dev/null || echo "")
+        echo "   Service: $SERVICE_PATH"
+        echo "   Package: $WORKSPACE_PACKAGE_NAME"
+      fi
+    fi
+  fi
+fi
+
+# 6. Check if project uses Prisma ORM
 USES_PRISMA=false
+PRISMA_PATH="prisma"
+
 if [ -f "package.json" ]; then
   if grep -q "@prisma/client" package.json; then
     USES_PRISMA=true
     echo "✓ Detected Prisma ORM"
 
-    # Check for schema
-    if [ ! -f "prisma/schema.prisma" ]; then
-      echo "⚠️  @prisma/client found but no prisma/schema.prisma"
-      echo "   Prisma Client generation will be skipped"
+    # Check for schema location
+    if [ "$IS_MONOREPO" = true ] && [ -n "$SERVICE_PATH" ]; then
+      # In monorepo, check service-specific prisma directory
+      if [ -d "$SERVICE_PATH/prisma" ]; then
+        PRISMA_PATH="$SERVICE_PATH/prisma"
+        echo "   Found prisma directory in $PRISMA_PATH"
+      elif [ ! -f "prisma/schema.prisma" ]; then
+        echo "⚠️  @prisma/client found but no prisma/schema.prisma"
+        echo "   Prisma Client generation will be skipped"
+      fi
     else
-      echo "   Found prisma/schema.prisma"
+      # Standalone project
+      if [ ! -f "prisma/schema.prisma" ]; then
+        echo "⚠️  @prisma/client found but no prisma/schema.prisma"
+        echo "   Prisma Client generation will be skipped"
+      else
+        echo "   Found prisma/schema.prisma"
+      fi
     fi
   fi
 fi
@@ -64,26 +106,56 @@ What type of project is this?
 [User selects option]
 ```
 
-### 2. Project Name
+### 2. Monorepo Configuration (If Detected)
+
+**If `pnpm-workspace.yaml` was detected:**
+
 ```
-What is the project name? (e.g., code-clinic-backend)
-[Default: extracted from package.json name field]
+✓ Detected pnpm workspace (monorepo)
+
+Which service/app should this workflow build?
+Detected services:
+1. apps/backend (@digital-kudos/backend)
+2. apps/frontend (@digital-kudos/frontend)
+
+[User selects service]
 ```
 
-### 3. Node.js Version
+**After selection:**
+
+```
+Selected service: apps/backend
+Package name: @digital-kudos/backend
+
+This workflow will:
+- Install workspace dependencies
+- Use pnpm workspace filtering (--filter=@digital-kudos/backend...)
+- Build only the selected service
+- Copy artifacts from monorepo paths
+
+Continue? [Y/n]
+```
+
+### 3. Project Name
+```
+What is the project name? (e.g., code-clinic-backend)
+[Default: extracted from package.json name field or workspace package name]
+```
+
+### 4. Node.js Version
 ```
 What Node.js version does this project use?
 [Default: 22]
 ```
 
-### 4. Package Manager
+### 5. Package Manager
 ```
 What package manager does this project use?
 1. npm
 2. pnpm
 3. yarn
 
-[Default: npm]
+[Default: pnpm if monorepo detected, otherwise npm]
 ```
 
 **If pnpm is selected, detect version:**
@@ -134,7 +206,7 @@ fi
 - Lockfile version 9.x → pnpm 10 (or 9)
 - No lockfile → pnpm 10 (latest stable)
 
-### 5. Test Scripts (Auto-detect or Confirm)
+### 6. Test Scripts (Auto-detect or Confirm)
 ```
 Detected test scripts in package.json:
 ✓ test:unit
@@ -150,7 +222,7 @@ Do you want to:
 [User selects option]
 ```
 
-### 6. Docker Registry
+### 7. Docker Registry
 ```
 Where do you want to publish Docker images?
 1. GitHub Container Registry (ghcr.io) - Recommended
@@ -161,7 +233,7 @@ Where do you want to publish Docker images?
 [Default: 1 - GitHub Container Registry]
 ```
 
-### 7. Additional Docker Images (For Microservices)
+### 8. Additional Docker Images (For Microservices)
 ```
 [Only if project type = Microservice]
 
@@ -177,7 +249,7 @@ For each Dockerfile, enter:
 - Registry: (same as main, or specify ECR/other)
 ```
 
-### 8. Database Requirements
+### 9. Database Requirements
 ```
 Does this project require a database for integration tests?
 1. PostgreSQL
@@ -193,7 +265,7 @@ If database selected:
 - Database password: [e.g., test_password]
 ```
 
-### 9. Contract Testing
+### 10. Contract Testing
 
 ```
 Does this project use Pact for contract testing?
@@ -370,7 +442,7 @@ Learn more:
 - Provider verification: https://docs.pact.io/implementation_guides/javascript/docs/provider
 ```
 
-### 10. Prisma ORM (Backend Only)
+### 11. Prisma ORM (Backend Only)
 
 **If Prisma is detected** (found `@prisma/client` in package.json):
 
@@ -408,9 +480,14 @@ When generating the workflow, replace these placeholders with actual values:
 | `<NODE_VERSION>` | Node.js version | `22` |
 | `<PACKAGE_MANAGER>` | Package manager | `pnpm`, `npm`, or `yarn` |
 | `<PNPM_VERSION>` | pnpm version (only if using pnpm) | `10`, `9`, or `8` |
+| `<IS_MONOREPO>` | Whether project is a monorepo | `true` or `false` |
+| `<WORKSPACE_PACKAGE_NAME>` | Workspace package name (if monorepo) | `@digital-kudos/backend` |
+| `<SERVICE_PATH>` | Service path in monorepo (if monorepo) | `apps/backend` |
 | `<INSTALL_COMMAND>` | Install command | `pnpm install --frozen-lockfile`, `npm ci`, `yarn install --frozen-lockfile` |
-| `<PRISMA_GENERATE_COMMAND>` | Prisma generate command (if Prisma detected) | `pnpm exec prisma generate`, `npx prisma generate`, `yarn prisma generate` |
-| `<PRISMA_MIGRATE_COMMAND>` | Prisma migrate command (if Prisma + database) | `pnpm exec prisma migrate deploy`, `npx prisma migrate deploy`, `yarn prisma migrate deploy` |
+| `<INSTALL_COMMAND_FILTERED>` | Filtered install for monorepo | `pnpm install --frozen-lockfile --filter=@digital-kudos/backend...` |
+| `<BUILD_COMMAND>` | Build command | `pnpm --filter=@digital-kudos/backend run build` (monorepo) or `npm run build` (standalone) |
+| `<PRISMA_GENERATE_COMMAND>` | Prisma generate command (if Prisma detected) | `cd apps/backend && pnpm exec prisma generate` (monorepo) or `pnpm exec prisma generate` (standalone) |
+| `<PRISMA_MIGRATE_COMMAND>` | Prisma migrate command (if Prisma + database) | `cd apps/backend && pnpm exec prisma migrate deploy` (monorepo) or `pnpm exec prisma migrate deploy` (standalone) |
 | `<DB_USER>` | Database user (if applicable) | `test_user` |
 | `<DB_PASSWORD>` | Database password (if applicable) | `test_password` |
 | `<DB_NAME>` | Database name (if applicable) | `test_db` |
@@ -944,6 +1021,201 @@ Until Pact Broker is configured:
   ✓ CI pipeline will still pass
   ✓ No blocking issues for development
 ```
+
+## Monorepo Dockerfile Generation
+
+**If monorepo detected (`IS_MONOREPO=true`), generate workspace-aware Dockerfile:**
+
+### Monorepo Dockerfile Template
+
+```dockerfile
+# syntax=docker/dockerfile:1
+
+# ============================================
+# Base Stage - Node.js with pnpm
+# ============================================
+FROM node:22-alpine AS base
+
+# Install pnpm
+RUN corepack enable && corepack prepare pnpm@<PNPM_VERSION> --activate
+
+# ============================================
+# Dependencies Stage - Install workspace deps
+# ============================================
+FROM base AS dependencies
+
+WORKDIR /app
+
+# Copy workspace configuration
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+
+# Copy all package.json files from workspace
+# This allows pnpm to understand the workspace structure
+COPY <SERVICE_PATH>/package.json ./<SERVICE_PATH>/
+COPY apps/*/package.json ./apps/
+COPY packages/*/package.json ./packages/
+
+# Install dependencies for this service only using workspace filtering
+RUN pnpm install --frozen-lockfile --filter=<WORKSPACE_PACKAGE_NAME>...
+
+# ============================================
+# Builder Stage - Build the service
+# ============================================
+FROM dependencies AS builder
+
+WORKDIR /app
+
+# Copy source code for the service
+COPY <SERVICE_PATH> ./<SERVICE_PATH>
+
+# [PRISMA SETUP - conditional if Prisma detected]
+# Generate Prisma Client before build
+RUN cd <SERVICE_PATH> && pnpm exec prisma generate
+
+# Build the service
+RUN pnpm --filter=<WORKSPACE_PACKAGE_NAME> run build
+
+# ============================================
+# Runner Stage - Production runtime
+# ============================================
+FROM base AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Copy built application from builder
+COPY --from=builder /app/<SERVICE_PATH>/dist ./dist
+COPY --from=builder /app/<SERVICE_PATH>/package.json ./package.json
+
+# Copy node_modules (production dependencies only)
+COPY --from=builder /app/node_modules ./node_modules
+
+# [PRISMA SETUP - conditional if Prisma detected]
+# Copy Prisma files and generated client
+COPY --from=builder /app/<SERVICE_PATH>/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
+
+USER nodejs
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+### Standalone Project Dockerfile Template
+
+**If NOT monorepo (`IS_MONOREPO=false`), generate standard Dockerfile:**
+
+```dockerfile
+# syntax=docker/dockerfile:1
+
+# ============================================
+# Base Stage
+# ============================================
+FROM node:22-alpine AS base
+
+RUN corepack enable && corepack prepare pnpm@<PNPM_VERSION> --activate
+
+# ============================================
+# Dependencies Stage
+# ============================================
+FROM base AS dependencies
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod=false
+
+# ============================================
+# Builder Stage
+# ============================================
+FROM dependencies AS builder
+
+WORKDIR /app
+
+COPY . .
+
+# [PRISMA SETUP - conditional if Prisma detected]
+RUN pnpm exec prisma generate
+
+RUN pnpm run build
+
+# ============================================
+# Runner Stage
+# ============================================
+FROM base AS runner
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
+COPY --from=builder /app/node_modules ./node_modules
+
+# [PRISMA SETUP - conditional if Prisma detected]
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nodejs
+
+USER nodejs
+
+EXPOSE 3000
+
+CMD ["node", "dist/index.js"]
+```
+
+### Dockerfile Generation Logic
+
+```bash
+if [ "$IS_MONOREPO" = true ]; then
+  echo "Generating monorepo-aware Dockerfile..."
+
+  # Detect all workspace directories for COPY commands
+  WORKSPACE_DIRS=$(find apps packages -maxdepth 1 -type d 2>/dev/null | grep -v '^apps$\|^packages$' || echo "")
+
+  # Generate COPY commands for all package.json files
+  for dir in $WORKSPACE_DIRS; do
+    if [ -f "$dir/package.json" ]; then
+      echo "COPY $dir/package.json ./$dir/"
+    fi
+  done
+
+  # Use monorepo Dockerfile template
+  # Replace variables:
+  # - <SERVICE_PATH> → apps/backend
+  # - <WORKSPACE_PACKAGE_NAME> → @digital-kudos/backend
+  # - <PNPM_VERSION> → 10
+  # - Add/remove Prisma blocks based on USES_PRISMA
+
+else
+  echo "Generating standalone Dockerfile..."
+
+  # Use standalone Dockerfile template
+  # Replace variables:
+  # - <PNPM_VERSION> → 10 (or npm/yarn version)
+  # - Add/remove Prisma blocks based on USES_PRISMA
+fi
+```
+
+### Key Differences: Monorepo vs Standalone
+
+| Aspect | Monorepo | Standalone |
+|--------|----------|------------|
+| **Workspace config** | Copy `pnpm-workspace.yaml` | N/A |
+| **Package.json files** | Copy ALL workspace package.json | Copy single package.json |
+| **Install command** | `--filter=<WORKSPACE_PACKAGE_NAME>...` | `pnpm install --frozen-lockfile` |
+| **Source path** | `COPY <SERVICE_PATH>` | `COPY . .` |
+| **Build command** | `pnpm --filter=<WORKSPACE_PACKAGE_NAME> run build` | `pnpm run build` |
+| **Prisma generate** | `cd <SERVICE_PATH> && pnpm exec prisma generate` | `pnpm exec prisma generate` |
+| **Artifact paths** | `/app/<SERVICE_PATH>/dist` | `/app/dist` |
 
 ## Validation and Safety
 
