@@ -31,6 +31,23 @@ git rev-parse --git-dir > /dev/null 2>&1 || echo "❌ Not a git repository"
 
 # 4. Check for .github/workflows directory
 mkdir -p .github/workflows
+
+# 5. Check if project uses Prisma ORM
+USES_PRISMA=false
+if [ -f "package.json" ]; then
+  if grep -q "@prisma/client" package.json; then
+    USES_PRISMA=true
+    echo "✓ Detected Prisma ORM"
+
+    # Check for schema
+    if [ ! -f "prisma/schema.prisma" ]; then
+      echo "⚠️  @prisma/client found but no prisma/schema.prisma"
+      echo "   Prisma Client generation will be skipped"
+    else
+      echo "   Found prisma/schema.prisma"
+    fi
+  fi
+fi
 ```
 
 ## Interactive Configuration
@@ -188,6 +205,30 @@ If yes:
   3. Both
 ```
 
+### 10. Prisma ORM (Backend Only)
+
+**If Prisma is detected** (found `@prisma/client` in package.json):
+
+```
+✓ Detected Prisma ORM in backend project
+
+Prisma Client must be generated before TypeScript compilation.
+The workflow will include a "Generate Prisma Client" step before build.
+
+Ensure:
+  - prisma/schema.prisma exists
+  - Package manager scripts support prisma generate
+
+Continue? [Y/n]
+```
+
+**Generate command mapping:**
+- pnpm → `pnpm exec prisma generate`
+- npm → `npx prisma generate`
+- yarn → `yarn prisma generate`
+
+**Note**: If database migrations are enabled for integration tests, `prisma migrate deploy` already generates the client, so the separate generate step may be skipped in that case.
+
 ## Workflow Generation
 
 Based on user input, generate the appropriate workflow file. See [commit-stage-pipeline.md](../rules/commit-stage-pipeline.md) for pipeline rules and best practices.
@@ -203,6 +244,7 @@ When generating the workflow, replace these placeholders with actual values:
 | `<PACKAGE_MANAGER>` | Package manager | `pnpm`, `npm`, or `yarn` |
 | `<PNPM_VERSION>` | pnpm version (only if using pnpm) | `10`, `9`, or `8` |
 | `<INSTALL_COMMAND>` | Install command | `pnpm install --frozen-lockfile`, `npm ci`, `yarn install --frozen-lockfile` |
+| `<PRISMA_GENERATE_COMMAND>` | Prisma generate command (if Prisma detected) | `pnpm exec prisma generate`, `npx prisma generate`, `yarn prisma generate` |
 | `<DB_USER>` | Database user (if applicable) | `test_user` |
 | `<DB_PASSWORD>` | Database password (if applicable) | `test_password` |
 | `<DB_NAME>` | Database name (if applicable) | `test_db` |
@@ -211,6 +253,11 @@ When generating the workflow, replace these placeholders with actual values:
 - npm → `npm ci`
 - pnpm → `pnpm install --frozen-lockfile`
 - yarn → `yarn install --frozen-lockfile`
+
+**Prisma Generate Command Mapping:**
+- npm → `npx prisma generate`
+- pnpm → `pnpm exec prisma generate`
+- yarn → `yarn prisma generate`
 
 **CRITICAL: pnpm Installation Order**
 
@@ -398,6 +445,11 @@ jobs:
             - name: Install dependencies
               run: <INSTALL_COMMAND>
 
+            # [PRISMA SETUP - conditional if Prisma detected]
+            - name: Generate Prisma Client
+              if: '<USES_PRISMA>' == 'true'
+              run: <PRISMA_GENERATE_COMMAND>
+
             - name: Compile Code (TypeScript)
               run: npm run build
 
@@ -547,7 +599,7 @@ When database is required, add these steps to the workflow:
   run: echo "DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@localhost:5432/<DB_NAME>" > .env
 
 - name: Run Database Migrations
-  run: npm run migrate
+  run: <PRISMA_MIGRATE_COMMAND>
 
 # [Integration tests run here]
 
@@ -555,6 +607,32 @@ When database is required, add these steps to the workflow:
   if: always()
   run: docker compose down
 ```
+
+**Migration Command Mapping:**
+
+**If using Prisma:**
+- npm → `npx prisma migrate deploy`
+- pnpm → `pnpm exec prisma migrate deploy`
+- yarn → `yarn prisma migrate deploy`
+
+**If using other migration tool:**
+- Custom: `npm run migrate` (or equivalent)
+
+**Important Note**: When using Prisma migrations, `prisma migrate deploy` automatically generates the Prisma Client, so you can optimize the workflow by conditionally skipping the separate "Generate Prisma Client" step:
+
+```yaml
+# Option 1: Always generate (simpler, works in all cases)
+- name: Generate Prisma Client
+  if: '<USES_PRISMA>' == 'true'
+  run: <PRISMA_GENERATE_COMMAND>
+
+# Option 2: Skip if migrations will run (optimization)
+- name: Generate Prisma Client
+  if: '<USES_PRISMA>' == 'true' && '<RUNS_MIGRATIONS>' == 'false'
+  run: <PRISMA_GENERATE_COMMAND>
+```
+
+Recommendation: Use Option 1 (always generate) for simplicity unless workflow runs very frequently and performance is critical.
 
 Also create `docker-compose.yml` if missing:
 
