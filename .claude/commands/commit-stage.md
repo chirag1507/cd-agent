@@ -69,6 +69,54 @@ What package manager does this project use?
 [Default: npm]
 ```
 
+**If pnpm is selected, detect version:**
+
+```bash
+# Step 1: Check lockfile version (most reliable)
+if [ -f "pnpm-lock.yaml" ]; then
+  LOCKFILE_VERSION=$(head -1 pnpm-lock.yaml | grep -oP 'lockfileVersion.*["\x27:]?\s*\K\d+(\.\d+)?' | head -1)
+
+  if [ -n "$LOCKFILE_VERSION" ]; then
+    LOCKFILE_MAJOR=$(echo "$LOCKFILE_VERSION" | cut -d. -f1)
+
+    # Map lockfile version to pnpm version
+    case "$LOCKFILE_MAJOR" in
+      9) PNPM_VERSION=10 ;;  # Lockfile 9.x requires pnpm 9+
+      6) PNPM_VERSION=8 ;;   # Lockfile 6.x requires pnpm 8
+      *) PNPM_VERSION=10 ;;  # Default to latest
+    esac
+  fi
+fi
+
+# Step 2: Fallback to package.json engines
+if [ -z "$PNPM_VERSION" ] && [ -f "package.json" ]; then
+  PNPM_ENGINE=$(jq -r '.engines.pnpm // ""' package.json 2>/dev/null)
+  if [ -n "$PNPM_ENGINE" ]; then
+    PNPM_VERSION=$(echo "$PNPM_ENGINE" | grep -oP '\d+' | head -1)
+  fi
+fi
+
+# Step 3: Default to latest stable
+if [ -z "$PNPM_VERSION" ]; then
+  PNPM_VERSION=10
+fi
+
+echo "📦 Detected pnpm version: $PNPM_VERSION"
+echo "   (Lockfile version: ${LOCKFILE_VERSION:-not found})"
+echo ""
+echo "Use pnpm version $PNPM_VERSION? [Y/n]"
+read -r response
+if [[ "$response" =~ ^[Nn]$ ]]; then
+  echo "Enter pnpm version (8, 9, or 10):"
+  read -r PNPM_VERSION
+fi
+```
+
+**Version Mapping Guide:**
+- Lockfile version 6.x → pnpm 8
+- Lockfile version 9.x → pnpm 10 (or 9)
+- No lockfile → pnpm 10 (latest stable)
+
 ### 5. Test Scripts (Auto-detect or Confirm)
 ```
 Detected test scripts in package.json:
@@ -144,6 +192,26 @@ If yes:
 
 Based on user input, generate the appropriate workflow file. See [commit-stage-pipeline.md](../rules/commit-stage-pipeline.md) for pipeline rules and best practices.
 
+### Template Variable Substitution
+
+When generating the workflow, replace these placeholders with actual values:
+
+| Placeholder | Description | Example |
+|-------------|-------------|---------|
+| `<PROJECT_NAME>` | Project name from package.json | `code-clinic-backend` |
+| `<NODE_VERSION>` | Node.js version | `22` |
+| `<PACKAGE_MANAGER>` | Package manager | `pnpm`, `npm`, or `yarn` |
+| `<PNPM_VERSION>` | pnpm version (only if using pnpm) | `10`, `9`, or `8` |
+| `<INSTALL_COMMAND>` | Install command | `pnpm install --frozen-lockfile`, `npm ci`, `yarn install --frozen-lockfile` |
+| `<DB_USER>` | Database user (if applicable) | `test_user` |
+| `<DB_PASSWORD>` | Database password (if applicable) | `test_password` |
+| `<DB_NAME>` | Database name (if applicable) | `test_db` |
+
+**Install Command Mapping:**
+- npm → `npm ci`
+- pnpm → `pnpm install --frozen-lockfile`
+- yarn → `yarn install --frozen-lockfile`
+
 **CRITICAL: pnpm Installation Order**
 
 When using pnpm as the package manager, pnpm MUST be installed BEFORE setting up Node.js with cache. This is because `cache: 'pnpm'` in `setup-node` requires pnpm to already be available.
@@ -153,7 +221,7 @@ When using pnpm as the package manager, pnpm MUST be installed BEFORE setting up
 - name: Install pnpm
   uses: pnpm/action-setup@v2
   with:
-    version: 8
+    version: <PNPM_VERSION>  # Use detected version (8, 9, or 10)
 
 - name: Setup Node.js
   uses: actions/setup-node@v4
@@ -173,10 +241,15 @@ When using pnpm as the package manager, pnpm MUST be installed BEFORE setting up
 - name: Install pnpm
   uses: pnpm/action-setup@v2
   with:
-    version: 8
+    version: <PNPM_VERSION>
 ```
 
-Note: This only applies to pnpm. npm and yarn are pre-installed in GitHub Actions runners.
+**Important Notes:**
+- This only applies to pnpm. npm and yarn are pre-installed in GitHub Actions runners.
+- The pnpm version MUST match your lockfile version:
+  - Lockfile version 6.x → pnpm 8
+  - Lockfile version 9.x → pnpm 10 (or 9)
+- The command auto-detects the correct version from your `pnpm-lock.yaml`
 
 ### Frontend Template
 
@@ -206,7 +279,7 @@ jobs:
         if: '<PACKAGE_MANAGER>' == 'pnpm'
         uses: pnpm/action-setup@v2
         with:
-          version: 8
+          version: <PNPM_VERSION>
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -314,7 +387,7 @@ jobs:
               if: '<PACKAGE_MANAGER>' == 'pnpm'
               uses: pnpm/action-setup@v2
               with:
-                  version: 8
+                  version: <PNPM_VERSION>
 
             - name: Setup Node.js
               uses: actions/setup-node@v4
