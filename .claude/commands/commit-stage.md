@@ -245,9 +245,11 @@ When generating the workflow, replace these placeholders with actual values:
 | `<PNPM_VERSION>` | pnpm version (only if using pnpm) | `10`, `9`, or `8` |
 | `<INSTALL_COMMAND>` | Install command | `pnpm install --frozen-lockfile`, `npm ci`, `yarn install --frozen-lockfile` |
 | `<PRISMA_GENERATE_COMMAND>` | Prisma generate command (if Prisma detected) | `pnpm exec prisma generate`, `npx prisma generate`, `yarn prisma generate` |
+| `<PRISMA_MIGRATE_COMMAND>` | Prisma migrate command (if Prisma + database) | `pnpm exec prisma migrate deploy`, `npx prisma migrate deploy`, `yarn prisma migrate deploy` |
 | `<DB_USER>` | Database user (if applicable) | `test_user` |
 | `<DB_PASSWORD>` | Database password (if applicable) | `test_password` |
 | `<DB_NAME>` | Database name (if applicable) | `test_db` |
+| `<DATABASE_URL>` | Complete database connection string | `postgresql://test_user:test_password@localhost:5432/test_db` |
 
 **Install Command Mapping:**
 - npm → `npm ci`
@@ -466,11 +468,18 @@ jobs:
               run: npm run test:contract
 
             # [DATABASE SETUP - conditional based on user input]
+            # Add steps from "Database Setup Template" section below:
+            # - Start Test Database
+            # - Wait for Test Database
+            # - Run Database Migrations (with env: DATABASE_URL)
 
             - name: Run Narrow Integration Tests
+              env:
+                  DATABASE_URL: postgresql://<DB_USER>:<DB_PASSWORD>@localhost:5432/<DB_NAME>
               run: npm run test:integration
 
             # [DATABASE TEARDOWN - conditional]
+            # - Stop Test Database (if: always())
 
             - name: Run Component Tests
               run: npm run test:component
@@ -595,18 +604,42 @@ When database is required, add these steps to the workflow:
       sleep 2
     done
 
-- name: Setup Test Environment
-  run: echo "DATABASE_URL=postgresql://<DB_USER>:<DB_PASSWORD>@localhost:5432/<DB_NAME>" > .env
-
 - name: Run Database Migrations
+  env:
+    DATABASE_URL: postgresql://<DB_USER>:<DB_PASSWORD>@localhost:5432/<DB_NAME>
   run: <PRISMA_MIGRATE_COMMAND>
 
-# [Integration tests run here]
+# [Integration tests run here - see below]
 
 - name: Stop Test Database
   if: always()
   run: docker compose down
 ```
+
+**Integration Tests Step** (add after migrations):
+
+```yaml
+- name: Run Narrow Integration Tests
+  env:
+    DATABASE_URL: postgresql://<DB_USER>:<DB_PASSWORD>@localhost:5432/<DB_NAME>
+  run: <PACKAGE_MANAGER> run test:integration
+```
+
+**Database URL Format:**
+
+Set `DATABASE_URL` as an environment variable in each step that needs database access (migrations, integration tests). **Do NOT create .env files** - use the `env:` block directly.
+
+| Database | URL Format | Example |
+|----------|------------|---------|
+| PostgreSQL | `postgresql://<user>:<password>@<host>:<port>/<database>` | `postgresql://test_user:test_pass@localhost:5432/test_db` |
+| MySQL | `mysql://<user>:<password>@<host>:<port>/<database>` | `mysql://test_user:test_pass@localhost:3306/test_db` |
+| MongoDB | `mongodb://<user>:<password>@<host>:<port>/<database>` | `mongodb://test_user:test_pass@localhost:27017/test_db` |
+
+**Why env: instead of .env files?**
+- ✅ CI/CD workflows don't automatically load .env files
+- ✅ Explicit env vars are more reliable and visible
+- ✅ No need for dotenv library in test configuration
+- ✅ Works consistently across all test frameworks
 
 **Migration Command Mapping:**
 
