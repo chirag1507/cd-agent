@@ -8,6 +8,8 @@ const command = args[0];
 
 const COMMANDS_DIR = path.join(__dirname, '..', '.claude', 'commands');
 const RULES_DIR = path.join(__dirname, '..', '.claude', 'rules');
+const AGENTS_DIR = path.join(__dirname, '..', '.claude', 'agents');
+const CD_AGENT_DIR = path.join(__dirname, '..', '.cd-agent');
 const DOCS_DIR = path.join(__dirname, '..', 'docs');
 const CLAUDE_MD = path.join(__dirname, '..', 'CLAUDE.md');
 
@@ -91,6 +93,22 @@ function init(options = {}) {
     process.exit(1);
   }
 
+  // Copy agents (if exists - for feature branch)
+  if (fs.existsSync(AGENTS_DIR)) {
+    const agentsTarget = path.join(claudeDir, 'agents');
+    copyDir(AGENTS_DIR, agentsTarget);
+    const agentCount = fs.readdirSync(AGENTS_DIR).filter(f => f.endsWith('.md')).length;
+    console.log(`✓ Copied ${agentCount} agent specs to .claude/agents/`);
+  }
+
+  // Copy .cd-agent directory (workflow state, schemas, testing guide)
+  if (fs.existsSync(CD_AGENT_DIR)) {
+    const cdAgentTarget = path.join(targetDir, '.cd-agent');
+    copyDir(CD_AGENT_DIR, cdAgentTarget);
+    const cdAgentFiles = fs.readdirSync(CD_AGENT_DIR).length;
+    console.log(`✓ Copied ${cdAgentFiles} workflow files to .cd-agent/`);
+  }
+
   // Copy workflow-flowchart.md from docs directory
   const workflowFile = path.join(DOCS_DIR, 'workflow-flowchart.md');
   if (fs.existsSync(workflowFile)) {
@@ -122,6 +140,7 @@ function init(options = {}) {
 ═══════════════════════════════════════════════════════
 
 Available commands:
+  /orchestrate            Primary entry point - routes and enforces gates
   /plan <feature>         Plan with Example Mapping
   /red <behavior>         Write failing test
   /green                  Make test pass
@@ -131,10 +150,15 @@ Available commands:
   /commit                 Conventional commit
   /ship                   Merge to main
 
+Workflow tracking:
+  - Workflow state managed in .cd-agent/workflow-state.json
+  - Gates enforced between phases (vision → plan → atdd → tdd → review → ship)
+  - Testing guide in .cd-agent/TESTING-GUIDE.md
+
 Next steps:
   1. ${options.withClaudeMd ? 'Customize CLAUDE.md for your domain' : 'Copy and customize CLAUDE.md: npx @avesta/cd-agent init --with-claude-md'}
   2. Start Claude Code in your project
-  3. Run /plan <your first feature>
+  3. Run /orchestrate to begin (or /plan <your first feature>)
 
 Documentation: https://github.com/chirag1507/cd-agent
 `);

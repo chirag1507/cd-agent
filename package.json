@@ -31,6 +31,8 @@
     "bin/**/*",
     ".claude/commands/**/*",
     ".claude/rules/**/*",
+    ".claude/agents/**/*",
+    ".cd-agent/**/*",
     "docs/**/*",
     "CLAUDE.md",
     "README.md"
