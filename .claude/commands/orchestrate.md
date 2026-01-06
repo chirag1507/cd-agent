@@ -51,9 +51,32 @@ Is this a slash command?
 
 ### Step 2: Check Workflow State
 
-Read `.cd-agent/workflow-state.json`. If file doesn't exist:
-- For `/cd-init` → Create initial state
-- For other requests → Ask user to run `/cd-init` first
+Read `.cd-agent/workflow-state.json`.
+
+**If file doesn't exist:**
+- If command is `/cd-init` → Allow and proceed to create initial state
+- If command is `/spike` → Allow (exception mode bypasses all gates)
+- **For ALL other commands (including `/vision`, `/plan`, etc.)** → BLOCK with this response:
+
+```
+⛔ **Cannot proceed**: Project not initialized.
+
+**Required:** Run `/cd-init` first to initialize workflow tracking.
+
+Example:
+  `/cd-init backend`
+  `/cd-init frontend`
+  `/cd-init fullstack`
+
+This creates the workflow state file (.cd-agent/workflow-state.json) and sets up project structure.
+
+**After initialization**, you can proceed with:
+1. `/vision` - Define product vision (optional but recommended)
+2. `/plan` - Plan your first feature
+3. Other workflow commands
+
+Would you like me to run `/cd-init` now?
+```
 
 ### Step 3: Validate Phase Prerequisites
 
@@ -163,8 +186,9 @@ When routing, provide context:
 
 | Command | Phase Required | Prerequisites |
 |---------|---------------|---------------|
-| `/vision` | any | None |
-| `/plan` | vision+ | Vision exists |
+| `/cd-init` | none | None (always allowed) |
+| `/vision` | idle+ | Project initialized (/cd-init) |
+| `/plan` | vision+ | Vision exists OR /cd-init done |
 | `/acceptance-test` | plan+ | Plan approved |
 | `/dsl` | atdd | Feature file exists |
 | `/driver` | atdd | DSL exists |
@@ -255,16 +279,28 @@ After each action, update `.cd-agent/workflow-state.json`:
 
 ## Initial Setup Response
 
-When no state file exists and user hasn't run `/cd-init`:
+**CRITICAL:** When no state file exists, you MUST block ALL commands except `/cd-init` and `/spike`.
+
+This is enforced in **Step 2: Check Workflow State** of the Decision Flow.
+
+The blocking message is:
 
 ```
-👋 **Welcome to CD-Agent**
+⛔ **Cannot proceed**: Project not initialized.
 
-No workflow state found. To get started:
+**Required:** Run `/cd-init` first to initialize workflow tracking.
 
-1. Run `/cd-init` to initialize the project
-2. Run `/vision` to define product vision (optional but recommended)
-3. Run `/plan` to plan your first feature
+Example:
+  `/cd-init backend`
+  `/cd-init frontend`
+  `/cd-init fullstack`
+
+This creates the workflow state file (.cd-agent/workflow-state.json) and sets up project structure.
+
+**After initialization**, you can proceed with:
+1. `/vision` - Define product vision (optional but recommended)
+2. `/plan` - Plan your first feature
+3. Other workflow commands
 
 Would you like me to run `/cd-init` now?
 ```
