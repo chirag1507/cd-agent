@@ -1,0 +1,48 @@
+{
+  "version": "1.0.0",
+  "project": {
+    "name": "my-project",
+    "type": "fullstack",
+    "initialized_at": "2024-01-01T00:00:00Z"
+  },
+  "current_phase": "idle",
+  "current_feature": null,
+  "tdd_state": null,
+  "gates": {
+    "vision_approved": null,
+    "plan_approved": null,
+    "atdd_complete": null,
+    "tdd_complete": null,
+    "review_approved": null,
+    "ship_complete": null
+  },
+  "artifacts": {
+    "vision": null,
+    "plan": null,
+    "features": [],
+    "dsl": [],
+    "drivers": [],
+    "tests": {
+      "unit": [],
+      "component": [],
+      "integration": [],
+      "contract": []
+    }
+  },
+  "history": [],
+  "pending_approval": null,
+  "exceptions": {
+    "spike_mode": false,
+    "hotfix_mode": false,
+    "spike_started_at": null
+  },
+  "metrics": {
+    "tdd_cycles": 0,
+    "tests_written": 0,
+    "refactors_completed": 0,
+    "gate_blocks": 0,
+    "time_in_phase": {}
+  },
+  "last_updated": null,
+  "last_agent": null
+}

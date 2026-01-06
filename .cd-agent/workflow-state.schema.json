@@ -1,0 +1,296 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "cd-agent-workflow-state",
+  "title": "CD-Agent Workflow State",
+  "description": "Schema for tracking workflow state in CD-Agent platform",
+  "type": "object",
+  "required": ["version", "current_phase", "project"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "1.0.0",
+      "description": "Schema version for compatibility"
+    },
+    "project": {
+      "type": "object",
+      "description": "Project identification",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Project name"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["backend", "frontend", "fullstack", "monorepo"],
+          "description": "Project type"
+        },
+        "initialized_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "When CD-Agent was initialized"
+        }
+      }
+    },
+    "current_phase": {
+      "type": "string",
+      "enum": ["idle", "vision", "plan", "atdd", "tdd", "review", "ship"],
+      "description": "Current workflow phase"
+    },
+    "current_feature": {
+      "type": ["object", "null"],
+      "description": "Feature currently being developed",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique feature identifier (kebab-case)"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable feature name"
+        },
+        "started_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "story_reference": {
+          "type": ["string", "null"],
+          "description": "JIRA/issue reference if available"
+        }
+      },
+      "required": ["id", "name", "started_at"]
+    },
+    "tdd_state": {
+      "type": ["object", "null"],
+      "description": "TDD cycle state when in TDD phase",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["red", "green", "refactor"],
+          "description": "Current TDD mode"
+        },
+        "current_test": {
+          "type": ["string", "null"],
+          "description": "Path to current test file"
+        },
+        "test_status": {
+          "type": "string",
+          "enum": ["not_run", "failing", "passing"],
+          "description": "Last known test status"
+        },
+        "cycle_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of completed TDD cycles"
+        }
+      }
+    },
+    "gates": {
+      "type": "object",
+      "description": "Gate status tracking",
+      "properties": {
+        "vision_approved": {
+          "$ref": "#/$defs/gate_status"
+        },
+        "plan_approved": {
+          "$ref": "#/$defs/gate_status"
+        },
+        "atdd_complete": {
+          "$ref": "#/$defs/gate_status"
+        },
+        "tdd_complete": {
+          "$ref": "#/$defs/gate_status"
+        },
+        "review_approved": {
+          "$ref": "#/$defs/gate_status"
+        },
+        "ship_complete": {
+          "$ref": "#/$defs/gate_status"
+        }
+      }
+    },
+    "artifacts": {
+      "type": "object",
+      "description": "Paths to workflow artifacts",
+      "properties": {
+        "vision": {
+          "type": ["string", "null"],
+          "description": "Path to PRODUCT-VISION.md"
+        },
+        "plan": {
+          "type": ["string", "null"],
+          "description": "Path to current plan file"
+        },
+        "features": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to .feature files"
+        },
+        "dsl": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to DSL files"
+        },
+        "drivers": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Paths to driver files"
+        },
+        "tests": {
+          "type": "object",
+          "properties": {
+            "unit": { "type": "array", "items": { "type": "string" } },
+            "component": { "type": "array", "items": { "type": "string" } },
+            "integration": { "type": "array", "items": { "type": "string" } },
+            "contract": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "history": {
+      "type": "array",
+      "description": "History of workflow events",
+      "items": {
+        "type": "object",
+        "required": ["event", "timestamp"],
+        "properties": {
+          "event": {
+            "type": "string",
+            "enum": [
+              "phase_entered",
+              "phase_completed",
+              "gate_passed",
+              "gate_blocked",
+              "artifact_created",
+              "test_run",
+              "tdd_cycle_completed",
+              "spike_started",
+              "spike_ended",
+              "hotfix_mode_entered",
+              "error"
+            ]
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "details": {
+            "type": "object",
+            "description": "Event-specific details"
+          },
+          "agent": {
+            "type": "string",
+            "description": "Agent that triggered event"
+          }
+        }
+      }
+    },
+    "pending_approval": {
+      "type": ["object", "null"],
+      "description": "Approval waiting for human",
+      "properties": {
+        "gate": {
+          "type": "string",
+          "description": "Gate name requiring approval"
+        },
+        "requested_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "requirements_met": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Requirements that are satisfied"
+        },
+        "requirements_missing": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Requirements not yet satisfied"
+        }
+      }
+    },
+    "exceptions": {
+      "type": "object",
+      "description": "Exception modes that bypass normal flow",
+      "properties": {
+        "spike_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Technical exploration mode"
+        },
+        "hotfix_mode": {
+          "type": "boolean",
+          "default": false,
+          "description": "Emergency fix mode (abbreviated workflow)"
+        },
+        "spike_started_at": {
+          "type": ["string", "null"],
+          "format": "date-time"
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "Development metrics for current feature",
+      "properties": {
+        "tdd_cycles": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tests_written": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "refactors_completed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "gate_blocks": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Times blocked by gate"
+        },
+        "time_in_phase": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "integer",
+            "description": "Seconds spent in phase"
+          }
+        }
+      }
+    },
+    "last_updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Last state update timestamp"
+    },
+    "last_agent": {
+      "type": ["string", "null"],
+      "description": "Last agent that modified state"
+    }
+  },
+  "$defs": {
+    "gate_status": {
+      "type": ["object", "null"],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "approver": {
+          "type": "string",
+          "enum": ["human", "automated"],
+          "description": "Who approved the gate"
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Optional notes about approval"
+        }
+      },
+      "required": ["passed", "timestamp", "approver"]
+    }
+  }
+}
