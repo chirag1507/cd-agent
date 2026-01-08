@@ -1,6 +1,9 @@
 # Eval reports (generated artifacts)
 reports/
 
+# DeepEval telemetry
+.deepeval/
+
 # Python cache
 __pycache__/
 *.py[cod]

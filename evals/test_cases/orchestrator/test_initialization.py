@@ -28,35 +28,14 @@ from metrics.orchestrator_metrics import (
     StateFileCorrectnessMetric,
 )
 
-
-# Mock Orchestrator Agent (placeholder until real implementation)
-class MockOrchestratorAgent:
-    """
-    Placeholder Orchestrator Agent.
-
-    This will be replaced with the real agent implementation.
-    For now, it returns a stub response to establish the eval infrastructure.
-    """
-
-    def execute(self, user_input: str, context: dict = None) -> str:
-        """
-        Execute orchestrator command.
-
-        Args:
-            user_input: User command (e.g., "/orchestrate plan feature")
-            context: State context (state_file_exists, current_phase, etc.)
-
-        Returns:
-            Agent response as string
-        """
-        # Stub implementation - will fail evals
-        return "Orchestrator agent not implemented yet"
+# Import real agent client
+from .agent_client import get_orchestrator_agent
 
 
 @pytest.fixture
 def orchestrator_agent():
-    """Fixture providing Orchestrator Agent instance."""
-    return MockOrchestratorAgent()
+    """Fixture providing REAL Orchestrator Agent instance via Claude Code CLI."""
+    return get_orchestrator_agent()
 
 
 @pytest.mark.eval
