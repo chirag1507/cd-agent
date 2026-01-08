@@ -26,3 +26,10 @@ npm-debug.log*
 
 # Reference materials (internal only, not for distribution)
 reference/
+
+# Generated documentation (presentation materials)
+docs/*.html
+docs/AGENT-FLEET-ARCHITECTURE.md
+docs/POSITIONING-SUMMARY.md
+docs/PRODUCT-VISION-GTM.md
+docs/README-DELIVERABLES.md
