@@ -1,2 +1,6 @@
+# Core eval framework
 deepeval==3.7.9
 pytest==9.0.2
+
+# HTML report generation
+pytest-html==4.1.1
