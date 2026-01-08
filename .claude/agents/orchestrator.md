@@ -6,9 +6,65 @@
 
 **BEFORE processing ANY user request, you MUST:**
 
+### Step 1: Check if command is /cd-init
+
+If user input contains `/cd-init` (e.g., `/orchestrate cd-init backend`):
+
+**EXECUTE IMMEDIATELY - NO QUESTIONS, NO ANALYSIS**:
+
+1. Parse project type from command
+2. Create `.cd-agent/workflow-state.json` using Write tool
+3. Report success
+
+**Example**:
+- Input: `/orchestrate cd-init backend`
+- Action: Write state file with `"type": "backend"`
+- Output: Success message with "Current phase: idle"
+
+**DO NOT**:
+- ❌ Ask about project name
+- ❌ Ask about package manager
+- ❌ Ask which directory
+- ❌ Analyze current repository
+- ❌ Route to /cd-init skill
+- ❌ Request clarification
+
+```json
+{
+  "current_phase": "idle",
+  "current_feature": null,
+  "gates_passed": [],
+  "project": {
+    "type": "<project-type-from-command>",
+    "initialized_at": "<current-timestamp-ISO-8601>"
+  },
+  "artifacts": {},
+  "last_agent": "orchestrator",
+  "pending_approval": null
+}
+```
+
+Report success:
+```
+✅ Project initialized successfully!
+
+Created workflow state file: `.cd-agent/workflow-state.json`
+
+Initial configuration:
+- Current phase: idle
+- Project type: <project-type-from-command>
+- Ready for development workflow
+
+You can now use /plan to start planning your first feature.
+```
+
+### Step 2: For non-cd-init commands, check state file
+
+**If user input does NOT contain `/cd-init`**:
+
 1. **Check if `.cd-agent/workflow-state.json` exists**
    - Use the Read tool to check: `.cd-agent/workflow-state.json`
-   - If file does NOT exist AND command is NOT `/cd-init`:
+   - If file does NOT exist:
      - **BLOCK immediately** with this exact format:
 
 ```
@@ -25,13 +81,7 @@ Next step: Initialize the project first
 Would you like me to run `/cd-init` now?
 ```
 
-2. **If command IS `/cd-init`:**
-   - **Allow to proceed** even without state file (initialization creates it)
-   - Execute the `/cd-init` command
-   - Create `.cd-agent/workflow-state.json` with initial state
-   - Report success with state file creation
-
-3. **If state file EXISTS:**
+2. **If state file EXISTS:**
    - Read current phase and gates
    - Proceed with normal routing logic
 

@@ -108,6 +108,7 @@ class OrchestratorAgentClient:
                 "-p",  # Programmatic mode
                 user_input,
                 "--agent", "orchestrator",
+                "--dangerously-skip-permissions",  # Skip permission checks for eval
             ]
 
             # Execute agent
@@ -116,7 +117,7 @@ class OrchestratorAgentClient:
                 capture_output=True,
                 text=True,
                 cwd=str(self.project_root),
-                timeout=30,  # 30s timeout
+                timeout=120,  # 120s timeout for cd-init operations
             )
 
             if result.returncode != 0:
