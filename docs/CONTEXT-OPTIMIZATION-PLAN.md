@@ -69,7 +69,7 @@ Proceeding with strict rule compliance.
 ## [Rest of command content]
 ```
 
-#### Skills Refactored (12/15 Complete)
+#### Skills Refactored (15/15 Complete ✅)
 
 **TDD Cycle** - ✅ COMPLETE
 - ✅ `/red` - TDD Red Phase (loads 3-4 rules based on test layer)
@@ -93,23 +93,23 @@ Proceeding with strict rule compliance.
 
 ---
 
-### Phase 3: Refactor Remaining Skills (IN PROGRESS)
+### Phase 3: Refactor Remaining Skills ✅ COMPLETE
 
-Apply the pattern to remaining skills:
+All 15 commands refactored with on-demand rule loading:
 
 | Skill | Required Rules | Priority | Status |
 |-------|----------------|----------|--------|
 | `/code-review` | 5 rules (code-style, controller-pattern-be, infrastructure-services, test-doubles, test-flakiness) | MEDIUM | ✅ DONE |
 | `/dependency-review` | `dependency-management.md` | MEDIUM | ✅ DONE |
 | `/spike` | `code-style.md` | MEDIUM | ✅ DONE |
-| `/plan` | (No rules, mainly exploration) | MEDIUM | ⏳ TODO |
-| `/cycle` | (Orchestrates /red, /green, /refactor - inherits their rules) | MEDIUM | ⏳ TODO |
-| `/commit` | (No rules, git operation) | LOW | ⏳ TODO |
-| `/ship` | (No rules, git operation) | LOW | ⏳ TODO |
-| `/cd-init` | (Scaffolding command, no specific rules) | LOW | ⏳ TODO |
-| `/vision` | (Strategic planning, no code rules) | LOW | ⏳ TODO |
-| `/dora-init` | (DORA metrics setup) | LOW | ⏳ TODO |
-| `/dora-report` | (Reporting only) | LOW | ⏳ TODO |
+| `/plan` | (No rules - planning only) | MEDIUM | ✅ DONE |
+| `/cycle` | (Delegates to sub-commands) | MEDIUM | ✅ DONE |
+| `/commit` | (No rules - git operation) | LOW | ✅ DONE |
+| `/ship` | (No rules - git operation) | LOW | ✅ DONE |
+| `/cd-init` | `dependency-management.md` | LOW | ✅ DONE |
+| `/vision` | (No rules - strategic planning) | LOW | ✅ DONE |
+| `/dora-init` | (No rules - metrics setup) | LOW | ✅ DONE |
+| `/dora-report` | (No rules - reporting only) | LOW | ✅ DONE |
 
 ---
 
