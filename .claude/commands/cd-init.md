@@ -9,6 +9,40 @@ $ARGUMENTS
 
 (If no project type provided, ask the user)
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/dependency-management.md` - Always use @latest for all package installations
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- dependency-management.md
+
+Proceeding with strict rule compliance for project initialization.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Purpose
 
 Set up a new TypeScript project with all the tooling needed for TDD and Continuous Delivery.

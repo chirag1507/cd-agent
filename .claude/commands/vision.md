@@ -2,6 +2,19 @@
 
 > Use this command to define, review, or refine the high-level product vision before feature development.
 
+## Rule Loading: Not Required
+
+⚠️ **This command does NOT require rule loading.**
+
+**Why:** The `/vision` command is for strategic planning that:
+- Defines product vision and goals
+- Identifies target users and personas
+- Creates PRODUCT-VISION.md documentation
+
+**No code generation** occurs, therefore no coding rules are needed.
+
+---
+
 ## Purpose
 
 Establish a clear product vision that guides all feature development, ensuring every feature aligns with the overall product goals and user needs.

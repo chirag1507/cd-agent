@@ -2,6 +2,19 @@
 
 > Use this command to view current DORA metrics, trends, and performance band for your project.
 
+## Rule Loading: Not Required
+
+⚠️ **This command does NOT require rule loading.**
+
+**Why:** The `/dora-report` command is for metrics reporting that:
+- Reads .dora/ JSON files for metrics data
+- Calculates performance bands and trends
+- Displays dashboard with ASCII charts
+
+**No application code generation** occurs, therefore no coding rules are needed.
+
+---
+
 ## Purpose
 
 Display real-time DORA metrics dashboard showing all 4 key metrics with:

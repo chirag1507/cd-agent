@@ -2,6 +2,19 @@
 
 > Use this command to initialize DORA metrics tracking in your project, enabling real-time visibility into your software delivery performance.
 
+## Rule Loading: Not Required
+
+⚠️ **This command does NOT require rule loading.**
+
+**Why:** The `/dora-init` command is for metrics setup that:
+- Creates .dora/ directory structure with JSON files
+- Aggregates deployment data from state files
+- Parses git history for metrics calculation
+
+**No application code generation** occurs, therefore no coding rules are needed.
+
+---
+
 ## Purpose
 
 Automatically scan and aggregate existing deployment data, git history, and CI/CD information to calculate and track the 4 key DORA metrics:
