@@ -69,7 +69,7 @@ Proceeding with strict rule compliance.
 ## [Rest of command content]
 ```
 
-#### Skills Refactored (9/15 Complete)
+#### Skills Refactored (12/15 Complete)
 
 **TDD Cycle** - ✅ COMPLETE
 - ✅ `/red` - TDD Red Phase (loads 3-4 rules based on test layer)
@@ -86,6 +86,11 @@ Proceeding with strict rule compliance.
 - ✅ `/release-stage` - Release Stage Pipeline (loads 1 rule)
 - ✅ `/acceptance-stage` - Acceptance Stage Pipeline (loads 2 rules)
 
+**Code Quality & Dependencies** - ✅ COMPLETE
+- ✅ `/code-review` - Code Review (loads 5 rules)
+- ✅ `/dependency-review` - Dependency Review (loads 1 rule)
+- ✅ `/spike` - Technical Exploration (loads 1 rule)
+
 ---
 
 ### Phase 3: Refactor Remaining Skills (IN PROGRESS)
@@ -94,10 +99,10 @@ Apply the pattern to remaining skills:
 
 | Skill | Required Rules | Priority | Status |
 |-------|----------------|----------|--------|
-| `/code-review` | (Reviews against rules, loads dynamically) | MEDIUM | ⏳ TODO |
-| `/dependency-review` | `dependency-management.md` | MEDIUM | ⏳ TODO |
+| `/code-review` | 5 rules (code-style, controller-pattern-be, infrastructure-services, test-doubles, test-flakiness) | MEDIUM | ✅ DONE |
+| `/dependency-review` | `dependency-management.md` | MEDIUM | ✅ DONE |
+| `/spike` | `code-style.md` | MEDIUM | ✅ DONE |
 | `/plan` | (No rules, mainly exploration) | MEDIUM | ⏳ TODO |
-| `/spike` | `code-style.md` | MEDIUM | ⏳ TODO |
 | `/cycle` | (Orchestrates /red, /green, /refactor - inherits their rules) | MEDIUM | ⏳ TODO |
 | `/commit` | (No rules, git operation) | LOW | ⏳ TODO |
 | `/ship` | (No rules, git operation) | LOW | ⏳ TODO |
