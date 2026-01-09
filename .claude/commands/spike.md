@@ -7,6 +7,40 @@ argument-hint: <technical question to explore>
 
 Conduct a time-boxed technical exploration to answer a specific question.
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/code-style.md` - Code style and comment rules
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- code-style.md
+
+Proceeding with strict rule compliance for spike exploration.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Input
 
 $ARGUMENTS
