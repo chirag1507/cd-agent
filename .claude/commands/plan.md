@@ -7,6 +7,22 @@ argument-hint: <feature description, user story, or JIRA ticket>
 
 Create a structured implementation plan that bridges product thinking with test-driven development.
 
+## Rule Loading: Not Required
+
+⚠️ **This command does NOT require rule loading.**
+
+**Why:** The `/plan` command focuses on:
+- Feature discovery and requirements gathering
+- Example Mapping sessions
+- Behavioral analysis
+- Planning documentation
+
+**No code is generated**, therefore no coding rules are needed.
+
+**What happens next:** After plan approval, use commands like `/red`, `/acceptance-test`, or `/spike` which will load appropriate rules for code generation.
+
+---
+
 ## Input
 
 $ARGUMENTS
