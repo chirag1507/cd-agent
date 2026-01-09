@@ -2,6 +2,43 @@
 
 > **Trigger**: User runs `/commit-stage` to initialize the commit stage workflow for their project
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+
+- `.claude/rules/commit-stage-pipeline.md` - Pipeline structure and best practices
+- `.claude/rules/dependency-management.md` - Package installation patterns
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- commit-stage-pipeline.md
+- dependency-management.md
+
+Proceeding with strict rule compliance for workflow generation.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Purpose
 
 Automate the setup of a production-ready commit stage CI/CD pipeline following the test pyramid and continuous delivery best practices. This command creates a GitHub Actions workflow that runs tests, static analysis, and builds Docker images on every commit.
@@ -97,6 +134,7 @@ fi
 Prompt the user for the following information:
 
 ### 1. Project Type
+
 ```
 What type of project is this?
 1. Frontend (Next.js/React)
@@ -137,18 +175,21 @@ Continue? [Y/n]
 ```
 
 ### 3. Project Name
+
 ```
 What is the project name? (e.g., code-clinic-backend)
 [Default: extracted from package.json name field or workspace package name]
 ```
 
 ### 4. Node.js Version
+
 ```
 What Node.js version does this project use?
 [Default: 22]
 ```
 
 ### 5. Package Manager
+
 ```
 What package manager does this project use?
 1. npm
@@ -202,11 +243,13 @@ fi
 ```
 
 **Version Mapping Guide:**
+
 - Lockfile version 6.x → pnpm 8
 - Lockfile version 9.x → pnpm 10 (or 9)
 - No lockfile → pnpm 10 (latest stable)
 
 ### 6. Test Scripts (Auto-detect or Confirm)
+
 ```
 Detected test scripts in package.json:
 ✓ test:unit
@@ -223,6 +266,7 @@ Do you want to:
 ```
 
 ### 7. Docker Registry
+
 ```
 Where do you want to publish Docker images?
 1. GitHub Container Registry (ghcr.io) - Recommended
@@ -234,6 +278,7 @@ Where do you want to publish Docker images?
 ```
 
 ### 8. Additional Docker Images (For Microservices)
+
 ```
 [Only if project type = Microservice]
 
@@ -250,6 +295,7 @@ For each Dockerfile, enter:
 ```
 
 ### 9. Database Requirements
+
 ```
 Does this project require a database for integration tests?
 1. PostgreSQL
@@ -286,34 +332,38 @@ Is this a Consumer or Provider?
 #### Consumer (Frontend/API Client) Configuration
 
 **Consumer workflow:**
+
 - ✅ Generate contracts locally (consumer tests)
 - ✅ Publish to Pact Broker
 - ❌ Do NOT verify provider
 
 **Configuration:**
+
 - Contracts generated in `./pacts` directory
 - Publish via `pact-broker publish` command
 - Requires: `PACT_BROKER_BASE_URL`, `PACT_BROKER_TOKEN`
 
 **Example Consumer Test:**
+
 ```typescript
 // Example: UserRepository.pact.test.ts
 const provider = new Pact({
-  consumer: 'frontend-app',
-  provider: 'api-service',
+  consumer: "frontend-app",
+  provider: "api-service",
   port: 1234,
-  dir: path.resolve(process.cwd(), 'pacts'), // ← Local generation
+  dir: path.resolve(process.cwd(), "pacts"), // ← Local generation
 });
 
 await provider.addInteraction({
-  state: 'a user with ID 123 exists',
-  uponReceiving: 'a request to get user',
-  withRequest: { method: 'GET', path: '/api/users/123' },
-  willRespondWith: { status: 200, body: { id: '123', email: 'user@example.com' } }
+  state: "a user with ID 123 exists",
+  uponReceiving: "a request to get user",
+  withRequest: { method: "GET", path: "/api/users/123" },
+  willRespondWith: { status: 200, body: { id: "123", email: "user@example.com" } },
 });
 ```
 
 **Publish command (package.json):**
+
 ```json
 {
   "scripts": {
@@ -327,12 +377,14 @@ await provider.addInteraction({
 **⚠️ CRITICAL: Providers fetch from Pact Broker, NOT local files**
 
 **Provider workflow:**
+
 - ❌ Do NOT read local pact files
 - ✅ Fetch contracts from Pact Broker
 - ✅ Verify provider meets contracts
 - ✅ Publish verification results
 
 **Required environment variables:**
+
 ```
 PACT_BROKER_BASE_URL=https://your-pactflow.io
 PACT_BROKER_TOKEN=xxxxx (from Pact Broker/Pactflow)
@@ -341,43 +393,45 @@ CI=true (automatically set in GitHub Actions)
 ```
 
 **Would you like to add Pact Broker configuration to your workflow?**
+
 ```
 [Y/n]
 ```
 
 **Example Provider Test Configuration:**
+
 ```typescript
 // provider-contract.test.ts
-import { Verifier } from '@pact-foundation/pact';
+import { Verifier } from "@pact-foundation/pact";
 
 const pactBrokerUrl = process.env.PACT_BROKER_BASE_URL;
 const pactBrokerToken = process.env.PACT_BROKER_TOKEN;
 
 // Skip gracefully if Pact Broker not configured
 if (!pactBrokerUrl || !pactBrokerToken) {
-  console.log('⚠️  Pact Broker not configured - skipping contract verification');
-  console.log('   Set PACT_BROKER_BASE_URL and PACT_BROKER_TOKEN to enable');
+  console.log("⚠️  Pact Broker not configured - skipping contract verification");
+  console.log("   Set PACT_BROKER_BASE_URL and PACT_BROKER_TOKEN to enable");
   return;
 }
 
 const verifier = new Verifier({
   providerBaseUrl: `http://localhost:${port}`,
-  provider: '<PROJECT_NAME>',
+  provider: "<PROJECT_NAME>",
 
   // ✅ Fetch from Pact Broker
   pactBrokerUrl,
   pactBrokerToken,
-  publishVerificationResult: process.env.CI === 'true',
-  providerVersion: process.env.GITHUB_SHA || 'dev',
+  publishVerificationResult: process.env.CI === "true",
+  providerVersion: process.env.GITHUB_SHA || "dev",
 
   // Select which contracts to verify
   consumerVersionSelectors: [
-    { mainBranch: true },           // Contracts from main branch
-    { deployedOrReleased: true },   // Contracts from deployed consumers
+    { mainBranch: true }, // Contracts from main branch
+    { deployedOrReleased: true }, // Contracts from deployed consumers
   ],
 
   stateHandlers: {
-    'a user with ID 123 exists': async () => {
+    "a user with ID 123 exists": async () => {
       mockUserRepository.findById.mockResolvedValue(testUser);
     },
     // ... other state handlers
@@ -389,12 +443,13 @@ await verifier.verifyProvider();
 
 **Why Pact Broker is Required for Providers:**
 
-| Approach | Development | CI/CD | Independent Deployment |
-|----------|-------------|-------|------------------------|
-| **Local Files** | ✅ Works | ❌ Fails | ❌ Impossible |
-| **Pact Broker** | ✅ Works | ✅ Works | ✅ Enabled |
+| Approach        | Development | CI/CD    | Independent Deployment |
+| --------------- | ----------- | -------- | ---------------------- |
+| **Local Files** | ✅ Works    | ❌ Fails | ❌ Impossible          |
+| **Pact Broker** | ✅ Works    | ✅ Works | ✅ Enabled             |
 
 **Local files don't work in CI because:**
+
 - Consumer generates contracts in their repo
 - Provider runs in different repo/pipeline
 - No way to share files between repos in CI
@@ -403,6 +458,7 @@ await verifier.verifyProvider();
 **Pact Broker Setup Options:**
 
 1. **Pactflow** (Recommended - Free tier available)
+
    - Managed service: https://pactflow.io
    - No infrastructure to manage
    - Free for open source
@@ -460,6 +516,7 @@ Continue? [Y/n]
 ```
 
 **Generate command mapping:**
+
 - pnpm → `pnpm exec prisma generate`
 - npm → `npx prisma generate`
 - yarn → `yarn prisma generate`
@@ -474,31 +531,33 @@ Based on user input, generate the appropriate workflow file. See [commit-stage-p
 
 When generating the workflow, replace these placeholders with actual values:
 
-| Placeholder | Description | Example |
-|-------------|-------------|---------|
-| `<PROJECT_NAME>` | Project name from package.json | `code-clinic-backend` |
-| `<NODE_VERSION>` | Node.js version | `22` |
-| `<PACKAGE_MANAGER>` | Package manager | `pnpm`, `npm`, or `yarn` |
-| `<PNPM_VERSION>` | pnpm version (only if using pnpm) | `10`, `9`, or `8` |
-| `<IS_MONOREPO>` | Whether project is a monorepo | `true` or `false` |
-| `<WORKSPACE_PACKAGE_NAME>` | Workspace package name (if monorepo) | `@digital-kudos/backend` |
-| `<SERVICE_PATH>` | Service path in monorepo (if monorepo) | `apps/backend` |
-| `<INSTALL_COMMAND>` | Install command | `pnpm install --frozen-lockfile`, `npm ci`, `yarn install --frozen-lockfile` |
-| `<INSTALL_COMMAND_FILTERED>` | Filtered install for monorepo | `pnpm install --frozen-lockfile --filter=@digital-kudos/backend...` |
-| `<BUILD_COMMAND>` | Build command | `pnpm --filter=@digital-kudos/backend run build` (monorepo) or `npm run build` (standalone) |
-| `<PRISMA_GENERATE_COMMAND>` | Prisma generate command (if Prisma detected) | `cd apps/backend && pnpm exec prisma generate` (monorepo) or `pnpm exec prisma generate` (standalone) |
-| `<PRISMA_MIGRATE_COMMAND>` | Prisma migrate command (if Prisma + database) | `cd apps/backend && pnpm exec prisma migrate deploy` (monorepo) or `pnpm exec prisma migrate deploy` (standalone) |
-| `<DB_USER>` | Database user (if applicable) | `test_user` |
-| `<DB_PASSWORD>` | Database password (if applicable) | `test_password` |
-| `<DB_NAME>` | Database name (if applicable) | `test_db` |
-| `<DATABASE_URL>` | Complete database connection string | `postgresql://test_user:test_password@localhost:5432/test_db` |
+| Placeholder                  | Description                                   | Example                                                                                                           |
+| ---------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `<PROJECT_NAME>`             | Project name from package.json                | `code-clinic-backend`                                                                                             |
+| `<NODE_VERSION>`             | Node.js version                               | `22`                                                                                                              |
+| `<PACKAGE_MANAGER>`          | Package manager                               | `pnpm`, `npm`, or `yarn`                                                                                          |
+| `<PNPM_VERSION>`             | pnpm version (only if using pnpm)             | `10`, `9`, or `8`                                                                                                 |
+| `<IS_MONOREPO>`              | Whether project is a monorepo                 | `true` or `false`                                                                                                 |
+| `<WORKSPACE_PACKAGE_NAME>`   | Workspace package name (if monorepo)          | `@digital-kudos/backend`                                                                                          |
+| `<SERVICE_PATH>`             | Service path in monorepo (if monorepo)        | `apps/backend`                                                                                                    |
+| `<INSTALL_COMMAND>`          | Install command                               | `pnpm install --frozen-lockfile`, `npm ci`, `yarn install --frozen-lockfile`                                      |
+| `<INSTALL_COMMAND_FILTERED>` | Filtered install for monorepo                 | `pnpm install --frozen-lockfile --filter=@digital-kudos/backend...`                                               |
+| `<BUILD_COMMAND>`            | Build command                                 | `pnpm --filter=@digital-kudos/backend run build` (monorepo) or `npm run build` (standalone)                       |
+| `<PRISMA_GENERATE_COMMAND>`  | Prisma generate command (if Prisma detected)  | `cd apps/backend && pnpm exec prisma generate` (monorepo) or `pnpm exec prisma generate` (standalone)             |
+| `<PRISMA_MIGRATE_COMMAND>`   | Prisma migrate command (if Prisma + database) | `cd apps/backend && pnpm exec prisma migrate deploy` (monorepo) or `pnpm exec prisma migrate deploy` (standalone) |
+| `<DB_USER>`                  | Database user (if applicable)                 | `test_user`                                                                                                       |
+| `<DB_PASSWORD>`              | Database password (if applicable)             | `test_password`                                                                                                   |
+| `<DB_NAME>`                  | Database name (if applicable)                 | `test_db`                                                                                                         |
+| `<DATABASE_URL>`             | Complete database connection string           | `postgresql://test_user:test_password@localhost:5432/test_db`                                                     |
 
 **Install Command Mapping:**
+
 - npm → `npm ci`
 - pnpm → `pnpm install --frozen-lockfile`
 - yarn → `yarn install --frozen-lockfile`
 
 **Prisma Generate Command Mapping:**
+
 - npm → `npx prisma generate`
 - pnpm → `pnpm exec prisma generate`
 - yarn → `yarn prisma generate`
@@ -508,26 +567,28 @@ When generating the workflow, replace these placeholders with actual values:
 When using pnpm as the package manager, pnpm MUST be installed BEFORE setting up Node.js with cache. This is because `cache: 'pnpm'` in `setup-node` requires pnpm to already be available.
 
 ✅ **Correct Order:**
+
 ```yaml
 - name: Install pnpm
   uses: pnpm/action-setup@v2
   with:
-    version: <PNPM_VERSION>  # Use detected version (8, 9, or 10)
+    version: <PNPM_VERSION> # Use detected version (8, 9, or 10)
 
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: '22'
-    cache: 'pnpm'  # Now pnpm is available
+    node-version: "22"
+    cache: "pnpm" # Now pnpm is available
 ```
 
 ❌ **Wrong Order (causes error):**
+
 ```yaml
 - name: Setup Node.js
   uses: actions/setup-node@v4
   with:
-    node-version: '22'
-    cache: 'pnpm'  # ❌ Error: pnpm not found
+    node-version: "22"
+    cache: "pnpm" # ❌ Error: pnpm not found
 
 - name: Install pnpm
   uses: pnpm/action-setup@v2
@@ -536,6 +597,7 @@ When using pnpm as the package manager, pnpm MUST be installed BEFORE setting up
 ```
 
 **Important Notes:**
+
 - This only applies to pnpm. npm and yarn are pre-installed in GitHub Actions runners.
 - The pnpm version MUST match your lockfile version:
   - Lockfile version 6.x → pnpm 8
@@ -782,6 +844,7 @@ If test scripts are missing from `package.json`, offer to add them:
 ```
 
 For **Frontend (Next.js)**:
+
 ```json
 {
   "scripts": {
@@ -871,13 +934,14 @@ When database is required, add these steps to the workflow:
 
 Set `DATABASE_URL` as an environment variable in each step that needs database access (migrations, integration tests). **Do NOT create .env files** - use the `env:` block directly.
 
-| Database | URL Format | Example |
-|----------|------------|---------|
+| Database   | URL Format                                                | Example                                                   |
+| ---------- | --------------------------------------------------------- | --------------------------------------------------------- |
 | PostgreSQL | `postgresql://<user>:<password>@<host>:<port>/<database>` | `postgresql://test_user:test_pass@localhost:5432/test_db` |
-| MySQL | `mysql://<user>:<password>@<host>:<port>/<database>` | `mysql://test_user:test_pass@localhost:3306/test_db` |
-| MongoDB | `mongodb://<user>:<password>@<host>:<port>/<database>` | `mongodb://test_user:test_pass@localhost:27017/test_db` |
+| MySQL      | `mysql://<user>:<password>@<host>:<port>/<database>`      | `mysql://test_user:test_pass@localhost:3306/test_db`      |
+| MongoDB    | `mongodb://<user>:<password>@<host>:<port>/<database>`    | `mongodb://test_user:test_pass@localhost:27017/test_db`   |
 
 **Why env: instead of .env files?**
+
 - ✅ CI/CD workflows don't automatically load .env files
 - ✅ Explicit env vars are more reliable and visible
 - ✅ No need for dotenv library in test configuration
@@ -886,11 +950,13 @@ Set `DATABASE_URL` as an environment variable in each step that needs database a
 **Migration Command Mapping:**
 
 **If using Prisma:**
+
 - npm → `npx prisma migrate deploy`
 - pnpm → `pnpm exec prisma migrate deploy`
 - yarn → `yarn prisma migrate deploy`
 
 **If using other migration tool:**
+
 - Custom: `npm run migrate` (or equivalent)
 
 **Important Note**: When using Prisma migrations, `prisma migrate deploy` automatically generates the Prisma Client, so you can optimize the workflow by conditionally skipping the separate "Generate Prisma Client" step:
@@ -912,7 +978,7 @@ Recommendation: Use Option 1 (always generate) for simplicity unless workflow ru
 Also create `docker-compose.yml` if missing:
 
 ```yaml
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -1207,21 +1273,22 @@ fi
 
 ### Key Differences: Monorepo vs Standalone
 
-| Aspect | Monorepo | Standalone |
-|--------|----------|------------|
-| **Workspace config** | Copy `pnpm-workspace.yaml` | N/A |
-| **Package.json files** | Copy ALL workspace package.json | Copy single package.json |
-| **Install command** | `--filter=<WORKSPACE_PACKAGE_NAME>...` | `pnpm install --frozen-lockfile` |
-| **Source path** | `COPY <SERVICE_PATH>` | `COPY . .` |
-| **Build command** | `pnpm --filter=<WORKSPACE_PACKAGE_NAME> run build` | `pnpm run build` |
-| **Prisma generate** | `cd <SERVICE_PATH> && pnpm exec prisma generate` | `pnpm exec prisma generate` |
-| **Artifact paths** | `/app/<SERVICE_PATH>/dist` | `/app/dist` |
+| Aspect                 | Monorepo                                           | Standalone                       |
+| ---------------------- | -------------------------------------------------- | -------------------------------- |
+| **Workspace config**   | Copy `pnpm-workspace.yaml`                         | N/A                              |
+| **Package.json files** | Copy ALL workspace package.json                    | Copy single package.json         |
+| **Install command**    | `--filter=<WORKSPACE_PACKAGE_NAME>...`             | `pnpm install --frozen-lockfile` |
+| **Source path**        | `COPY <SERVICE_PATH>`                              | `COPY . .`                       |
+| **Build command**      | `pnpm --filter=<WORKSPACE_PACKAGE_NAME> run build` | `pnpm run build`                 |
+| **Prisma generate**    | `cd <SERVICE_PATH> && pnpm exec prisma generate`   | `pnpm exec prisma generate`      |
+| **Artifact paths**     | `/app/<SERVICE_PATH>/dist`                         | `/app/dist`                      |
 
 ## Validation and Safety
 
 Before writing files:
 
 1. **Check for existing workflow**:
+
    ```bash
    if [ -f ".github/workflows/commit-stage.yml" ]; then
      echo "⚠️  commit-stage.yml already exists. Overwrite? [y/N]"
@@ -1233,6 +1300,7 @@ Before writing files:
    ```
 
 2. **Validate package.json**:
+
    ```bash
    node -e "JSON.parse(require('fs').readFileSync('package.json'))" || {
      echo "❌ Invalid package.json format"

@@ -9,6 +9,18 @@ $ARGUMENTS
 
 (If no input provided, check conversation context for the current behavior to test)
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
 ## The Red Phase
 
 You are in the **RED** phase of the TDD cycle. Your ONLY job is to write ONE failing test.
@@ -27,25 +39,11 @@ You are in the **RED** phase of the TDD cycle. Your ONLY job is to write ONE fai
     └─────────┘
 ```
 
-## Rules (Non-Negotiable)
+## Execution Protocol
 
-### DO
-- Write exactly ONE test
-- Make the test fail for the RIGHT reason (assertion failure, not syntax/import error)
-- Use descriptive, behavior-focused test names
-- Follow the Arrange-Act-Assert pattern
-- Use Test Data Builders for entity creation
-- Use `jest.fn()` for stubs and spies at boundaries
+### Phase 1: Identify Test Layer
 
-### DON'T
-- Write multiple tests at once
-- Write any implementation code
-- Fix import errors by writing implementation (create empty stubs only)
-- Add extra assertions "while you're at it"
-
-## Test Layer Selection
-
-If the layer is not clear from context, I will ask:
+If the test layer is not clear from context, ask:
 
 ```
 Which test layer are you implementing?
@@ -63,128 +61,74 @@ Which test layer are you implementing?
 Enter number or layer name:
 ```
 
-| Layer | When to Use | Rules File |
-|-------|-------------|------------|
-| **Sociable Unit** (BE) | Testing Use Case behavior | `rules/sociable-unit-test.md` |
-| **Sociable Unit** (FE) | Testing Use Case/hooks | `rules/sociable-unit-test-fe.md` |
-| **Component** (BE) | Testing HTTP vertical slice | `rules/component-test-be.md` |
-| **Component** (FE) | Testing React component behavior | `rules/component-test-fe.md` |
-| **Narrow Integration** (BE) | Testing repository with real DB | `rules/narrow-integration-test.md` |
-| **Narrow Integration** (FE) | Testing hooks with real Use Cases | `rules/narrow-integration-test-fe.md` |
-| **Contract** (Consumer) | Testing API client expectations | `rules/contract-test-consumer.md` |
-| **Contract** (Provider) | Verifying consumer contracts | `rules/contract-test-provider.md` |
-| **Acceptance** | Testing business behavior E2E | `rules/acceptance-test.md` |
+### Phase 2: Load Applicable Rules (MANDATORY)
 
-**IMPORTANT**: Before writing a test, read and follow the rules in the appropriate rules file.
+Based on the test layer identified, **YOU MUST read these rule files**:
 
-## Key Principles (Apply to ALL Test Types)
+| Layer | Required Rules to Read |
+|-------|------------------------|
+| **Sociable Unit** (BE) | `.claude/rules/sociable-unit-test.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
+| **Sociable Unit** (FE) | `.claude/rules/sociable-unit-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
+| **Component** (BE) | `.claude/rules/component-test-be.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
+| **Component** (FE) | `.claude/rules/component-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
+| **Narrow Integration** (BE) | `.claude/rules/narrow-integration-test.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
+| **Narrow Integration** (FE) | `.claude/rules/narrow-integration-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
+| **Contract** (Consumer) | `.claude/rules/contract-test-consumer.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
+| **Contract** (Provider) | `.claude/rules/contract-test-provider.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
+| **Acceptance** | `.claude/rules/acceptance-test.md`<br>`.claude/rules/test-flakiness.md`<br>`.claude/rules/code-style.md` |
 
-### Test Behavior, Not Implementation
+**ACTION REQUIRED:**
+- Use the Read tool to read ALL applicable rule files in parallel
+- Example: For Sociable Unit (BE), read all 4 files listed above
 
-```typescript
-// BAD: Testing interactions (brittle)
-expect(repository.findByEmail).toHaveBeenCalledWith("test@example.com");
+### Phase 3: Confirm Rules Loaded (MANDATORY CHECKPOINT)
 
-// GOOD: Testing state/outcome (robust)
-expect(result.isSuccess).toBe(true);
-expect(result.getValue().email).toBe("test@example.com");
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Test Layer: [layer name]
+Rules Read:
+- [file 1]
+- [file 2]
+- [file 3]
+...
+
+Proceeding with strict rule compliance.
 ```
 
-### Use Test Data Builders
+**DO NOT SKIP THIS CHECKPOINT. If you cannot confirm rules are loaded, STOP.**
 
-```typescript
-// BAD: Direct instantiation
-const user = User.create({ email: Email.create("test@example.com").getValue() });
+### Phase 4: Write ONE Failing Test
 
-// GOOD: Use builder (see rules/test-data-builders.md)
-const user = new UserBuilder().withEmail("test@example.com").build();
-```
+Following the loaded rules:
 
-### Stub Boundaries, Use Real Domain Objects
+1. **Identify the behavior** to test from the plan/context
+2. **Write exactly ONE test** following patterns from the rules
+3. **Use Test Data Builders** for entity creation (see test-data-builders.md)
+4. **Stub I/O boundaries** using `jest.fn()` (see test-doubles.md)
+5. **Follow code style rules** (see code-style.md)
 
-```typescript
-// REAL: Domain entities and value objects
-const email = Email.create("test@example.com").getValue();
+### Phase 5: Run the Test
 
-// STUB: Infrastructure boundaries (see rules/test-doubles.md)
-const userRepository = {
-  findByEmail: jest.fn().mockResolvedValue(null),
-  save: jest.fn(),
-};
-```
+Run the test and verify it fails for the RIGHT reason:
 
-## Quick Reference by Test Type
+- ✅ **Assertion failure** - Good! Ready for GREEN phase
+- ❌ **Import/syntax error** - Create minimal stub, re-run test
 
-### Sociable Unit Test (Backend Use Case)
-```typescript
-describe('RegisterUserUseCase', () => {
-  it('should register user when email is not taken', async () => {
-    // Arrange - stub boundaries, real domain
-    const userRepository = {
-      findByEmail: jest.fn().mockResolvedValue(null),
-      save: jest.fn().mockImplementation(user => Promise.resolve(user)),
-    };
-    const useCase = new RegisterUserUseCase(userRepository);
+### Phase 6: Verification Checklist
 
-    // Act
-    const result = await useCase.execute({
-      email: 'test@example.com',
-      password: 'ValidPass123!'
-    });
-
-    // Assert - verify state, minimal interaction
-    expect(result.isSuccess).toBe(true);
-    expect(result.getValue().email.value).toBe('test@example.com');
-  });
-});
-```
-
-### Component Test (Frontend)
-```typescript
-describe('RegistrationForm', () => {
-  it('should display a loading indicator while submitting', () => {
-    // Arrange - use builder, page object
-    const props = new RegistrationFormPropsBuilder().isLoading().build();
-    const { page } = renderComponent(props);
-
-    // Assert - behavior-focused
-    page.shouldBeInLoadingState();
-  });
-});
-```
-
-### Component Test (Backend)
-```typescript
-describe('POST /api/users/register', () => {
-  it('should return 201 when registration succeeds', async () => {
-    // Arrange
-    mockUserRepository.findByEmail.mockResolvedValue(null);
-    mockUserRepository.save.mockResolvedValue(undefined);
-
-    // Act
-    const response = await request(app)
-      .post('/api/users/register')
-      .send({ email: 'test@example.com', password: 'ValidPass123!' })
-      .expect(201);
-
-    // Assert
-    expect(response.body.email).toBe('test@example.com');
-  });
-});
-```
-
-## Process
-
-1. **Identify the behavior** to test from the plan
-2. **Determine the test layer** (use table above)
-3. **Read the appropriate rules file** for that test type
-4. **Write the test** following the patterns in the rules
-5. **Run the test** and verify it fails for the RIGHT reason
-6. **If import/syntax error**: Create minimal stub only, then re-run
+Before moving to GREEN phase, confirm:
+- [ ] Test is written and saved
+- [ ] Test has been run
+- [ ] Test fails with an ASSERTION error (not import/syntax)
+- [ ] Test follows all loaded rules
+- [ ] Test name clearly describes expected behavior
 
 ## Handling Import Errors
 
-If the test fails because a class/function doesn't exist:
+If the test fails because a class/function doesn't exist, create ONLY a minimal stub:
 
 ```typescript
 // Create ONLY a stub - no implementation
@@ -195,27 +139,18 @@ export class RegisterUserUseCase {
 }
 ```
 
-Then re-run the test. It should now fail with an assertion error, not an import error.
+Then re-run the test. It should now fail with an assertion error.
 
-## Verification
+## Output Format
 
-Before moving to GREEN phase, confirm:
-- [ ] Test is written and saved
-- [ ] Test has been run
-- [ ] Test fails with an ASSERTION error (not import/syntax)
-- [ ] Test follows the rules for its test type
-- [ ] Test name clearly describes the expected behavior
-
-## Output
-
-After writing the test, report:
+After completing all phases, report:
 
 ```
 RED PHASE COMPLETE
 
 Test: [test name]
 File: [file path]
-Type: [Sociable Unit | Component | Integration | Contract | Acceptance]
+Type: [test layer]
 Failure: [the assertion that failed]
 
 Ready for GREEN phase: /green
@@ -224,3 +159,14 @@ Ready for GREEN phase: /green
 ## Next Step
 
 Once the test fails correctly, use `/green` to write the minimal implementation.
+
+---
+
+## Core Principles (Summary - See Rule Files for Details)
+
+- **ONE test at a time** - Never batch tests
+- **Test behavior, not implementation** - Verify outcomes, minimize interaction verification
+- **Real domain objects** - Use actual entities and value objects
+- **Stub I/O boundaries** - Mock only repositories, services, HTTP clients
+- **Use builders** - Decouple tests from entity construction
+- **Behavior-focused names** - `"should register user when email is available"`
