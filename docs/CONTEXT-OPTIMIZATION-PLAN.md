@@ -71,10 +71,12 @@ Proceeding with strict rule compliance.
 
 #### Skills Refactored (15/15 Complete ✅)
 
-**TDD Cycle** - ✅ COMPLETE
+**TDD Cycle** - ✅ COMPLETE (Context-Aware)
 - ✅ `/red` - TDD Red Phase (loads 3-4 rules based on test layer)
-- ✅ `/green` - TDD Green Phase (loads code-style.md)
-- ✅ `/refactor` - TDD Refactor Phase (loads code-style.md)
+- ✅ `/green` - TDD Green Phase (inherits context from /red, loads 1-4 rules)
+- ✅ `/refactor` - TDD Refactor Phase (inherits context from /red, loads 1-4 rules)
+
+**Pattern:** `/red` asks for test layer once, `/green` and `/refactor` inherit that context and load appropriate architecture rules automatically. No interruption to TDD flow.
 
 **Acceptance Testing** - ✅ COMPLETE
 - ✅ `/acceptance-test` - Write Executable Specification (loads 3 rules)

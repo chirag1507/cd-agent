@@ -9,32 +9,55 @@ $ARGUMENTS
 
 (If no input provided, review recent implementation for improvement opportunities)
 
-## CRITICAL: Mandatory Rule Loading
+## CRITICAL: Context-Aware Rule Loading
 
-⚠️ **BEFORE PROCEEDING, YOU MUST:**
+### Phase 1: Detect Implementation Context (MANDATORY)
 
-1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
-2. **Confirm rules are loaded** (brief acknowledgment)
-3. **Follow rules strictly** (non-negotiable)
+⚠️ **Check conversation history for test layer from `/red` command.**
 
-**Required Rules:**
-- `.claude/rules/code-style.md` - Code style and comment rules
+If test layer context exists, proceed to Phase 2 with that context.
 
-**ACTION REQUIRED**: Use Read tool to load these files NOW.
+**If NO context exists** (e.g., `/refactor` called standalone), ask:
+
+**"What type of code are you refactoring?"**
+- Backend Controller / Use Case / Infrastructure / Domain
+- Frontend Component / Use Case / Hook / Mapper
+
+---
+
+### Phase 2: Load Applicable Rules (MANDATORY)
+
+Based on the test layer context from `/red` or user response, **YOU MUST read these rule files** in parallel:
+
+| Test Layer / Implementation Type | Required Rules to Load |
+|----------------------------------|------------------------|
+| **Sociable Unit (BE)** → Backend Use Case | `.claude/rules/code-style.md` |
+| **Component (BE)** → Backend Controller | `.claude/rules/controller-pattern-be.md`<br>`.claude/rules/infrastructure-services.md`<br>`.claude/rules/code-style.md` |
+| **Narrow Integration (BE)** → Backend Infrastructure | `.claude/rules/infrastructure-services.md`<br>`.claude/rules/code-style.md` |
+| **Backend Domain Entity/Value Object** | `.claude/rules/code-style.md` |
+| **Sociable Unit (FE)** → Frontend Use Case | `.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/code-style.md` |
+| **Component (FE)** → Frontend Component | `.claude/rules/atomic-design.md`<br>`.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/component-test-fe.md`<br>`.claude/rules/code-style.md` |
+| **Narrow Integration (FE)** → Frontend Hook | `.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/code-style.md` |
+| **Frontend Mapper** | `.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/code-style.md` |
+
+**ACTION REQUIRED**: Use multiple Read tool calls in parallel to load the applicable rule files NOW.
 
 **If you cannot read the rule files, STOP and notify the user.**
 
 ---
 
-### Mandatory Checkpoint: Confirm Rules Loaded
+### Phase 3: Confirm Rules Loaded (MANDATORY CHECKPOINT)
 
 After reading the rule files, you MUST output:
 
 ```
 ✅ RULES LOADED
 
+Context: [Test Layer from /red] → [Implementation Type]
 Rules Read:
-- code-style.md
+- [rule-1].md
+- [rule-2].md
+- [rule-3].md
 
 Proceeding with strict rule compliance for refactoring.
 ```
