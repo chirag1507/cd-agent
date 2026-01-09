@@ -227,3 +227,47 @@ Stay disciplined:
 - Specific question
 - Delete when done
 - Return to TDD immediately
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Exploration (Time-Boxed Technical Discovery)
+
+**Suggested Next Steps**:
+1. **If question answered**: Delete spike code, return to `/plan` or `/red` with gained knowledge
+2. **If need more exploration**: Continue spike BUT acknowledge time-box boundary
+3. **If ready to implement**: `/red <first behavior>` - Start TDD with learned approach
+
+**Output Format**:
+```
+✅ SPIKE COMPLETE
+
+Question Explored: [technical question]
+Time Spent: [X] minutes (of [Y] minute time-box)
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Recommended approach]
+
+Code Status:
+- Spike code: [✓ Deleted / ⚠ To be deleted]
+- Learning applied to: [plan / architecture decision / implementation approach]
+
+Suggested Next Step:
+→ /plan <feature> - Apply learnings to feature planning
+   OR
+→ /red <first behavior> - Start TDD implementation with learned approach
+   OR
+→ Delete spike code and commit knowledge to docs/spikes/
+
+See: CLAUDE.md "Development Workflow" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without:**
+1. Answering the original question
+2. Documenting findings
+3. Suggesting return to main workflow (/plan or /red)

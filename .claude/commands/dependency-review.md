@@ -498,3 +498,44 @@ If an update breaks tests:
 - [dependency-management.md](../rules/dependency-management.md) - Dependency installation rules
 - [/cd-init](cd-init.md) - Initial project setup with @latest
 - [CLAUDE.md](../../CLAUDE.md) - Project conventions
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Maintenance - Dependency Review Complete
+
+**Suggested Next Steps**:
+1. **If critical security updates found**: Apply immediately - update packages, run tests, commit
+2. **If update plan generated**: Review with team, schedule time for updates
+3. **If starting updates**: Begin with Phase 1 (Critical Security), one package at a time
+4. **If updates complete**: Return to feature work - `/plan <feature>` or continue existing work
+
+**Output Format**:
+```
+✅ DEPENDENCY REVIEW COMPLETE
+
+Report saved to: docs/dependency-updates/review-[date].md
+
+Update Summary:
+- 🚨 Critical Security: [count] updates (IMMEDIATE)
+- ✅ Patch Updates: [count] updates
+- ⚠️  Minor Updates: [count] updates
+- 🔴 Major Updates: [count] updates
+- ⚠️  Deprecated: [count] packages
+
+Estimated Total Time: [X] hours spread over [Y] weeks
+
+Suggested Next Step:
+→ Apply critical security updates immediately (Phase 1)
+   OR
+→ Schedule update sessions following generated plan
+   OR
+→ Return to feature work - /plan <feature> or continue TDD cycle
+
+See: CLAUDE.md "Dependency Management" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting immediate action for critical updates or return to feature work.**

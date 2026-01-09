@@ -489,3 +489,43 @@ After review:
 - Fix Priority 1 issues before shipping
 - Create tasks for Priority 2 items
 - Consider Priority 3 for future refactoring
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Quality Gate - Code Review Complete
+
+**Suggested Next Steps**:
+1. **If Priority 1 issues found**: Fix immediately - use `/red`, `/green`, `/refactor` as needed
+2. **If no critical issues**: `/commit` - Create conventional commit
+3. **If already committed**: `/ship` - Merge to main branch
+
+**Output Format**:
+```
+✅ CODE REVIEW COMPLETE
+
+Scope: [what was reviewed]
+
+Assessment:
+- Architecture: [✓ Good / ⚠ Issues found / ✗ Violations]
+- Tests: [✓ Good / ⚠ Coverage gaps / ✗ Missing tests]
+- Code Quality: [✓ Good / ⚠ Improvements needed / ✗ Issues]
+
+Priority 1 (MUST FIX): [count] issues
+Priority 2 (SHOULD FIX): [count] improvements
+Priority 3 (NICE TO HAVE): [count] suggestions
+
+Suggested Next Step:
+→ Fix Priority 1 issues - [list critical issues]
+   OR
+→ /commit - Create conventional commit (if review passed)
+   OR
+→ /ship - Merge to main (if already committed)
+
+See: CLAUDE.md "Code Review" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting appropriate next step based on review findings.**

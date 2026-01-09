@@ -833,3 +833,45 @@ Next step: Run acceptance tests to verify full flow
 1. **All layers complete?** → Run acceptance tests
 2. **Tests fail?** → Use TDD (`/red`, `/green`, `/refactor`) to implement SUT
 3. **Need another channel?** → Implement additional Protocol Driver
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 5 - System Test Implementation (Protocol Drivers Complete)
+
+**Suggested Next Steps**:
+1. **If all 4 layers complete (Gherkin + DSL + Steps + Drivers)**: Run acceptance tests to verify end-to-end flow
+2. **If tests fail**: Backend/Frontend implementation needed - use `/red <first behavior>` for TDD implementation
+3. **If tests pass**: Feature is complete - `/code-review` before committing
+
+**Output Format**:
+```
+✅ PROTOCOL DRIVER COMPLETE
+
+Driver: [driver class name]
+Type: [UI | API]
+Location: drivers/[channel]/[driver].driver.ts
+Methods: [count] implemented
+
+Page Objects: [count] created (if UI)
+Services: [count] created
+Scenarist Scenarios: [count] configured
+
+Four-Layer Model Status:
+- Test Cases (Gherkin): ✓
+- DSL Layer: ✓
+- Protocol Drivers: ✓ (this driver)
+- System Under Test: [needs implementation / already exists]
+
+Suggested Next Step:
+→ Run acceptance tests - Verify complete end-to-end flow
+   OR
+→ /red <first behavior> - Implement backend/frontend if tests fail
+
+See: CLAUDE.md "Four-Layer Model" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting to run acceptance tests.**

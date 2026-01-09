@@ -762,3 +762,72 @@ If yes, run pattern checks:
 - [commit-stage.md](./commit-stage.md) - Commit stage setup
 - [acceptance-stage.md](./acceptance-stage.md) - Acceptance stage setup
 - [cd-pipeline-reference](../../reference/cd-pipeline-reference/) - Complete CD pipeline architecture
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: CI/CD Setup - Release Stage Pipeline Configuration
+
+**Suggested Next Steps**:
+1. **If workflow just generated**: Review generated workflow file for correctness
+2. **If workflow looks good**: Add required secrets to GitHub repository settings
+3. **If secrets configured**: Commit workflow file and push to repository
+4. **If workflow committed**: Run commit stage to get Docker image SHAs
+5. **If images ready**: Trigger release workflow manually to test deployment
+6. **If deployment succeeds**: Verify health checks and smoke tests pass
+7. **If release stage working**: `/acceptance-stage` - Configure acceptance testing pipeline
+8. **If all pipelines configured**: Return to feature work - `/plan <feature>` or `/red <behavior>`
+
+**Output Format**:
+```
+✅ RELEASE STAGE PIPELINE GENERATED
+
+Workflow File: .github/workflows/release-<env>.yml
+Deployment Target: [EC2/ECS/K8s/Cloud Run]
+Environments: [QA, UAT, Production]
+Components: [frontend, backend, additional services]
+
+Pipeline Features:
+- ✓ Contract verification (can-i-deploy)
+- ✓ Environment-specific deployment
+- ✓ Deployment state tracking
+- ✓ Pact Broker integration
+- ✓ Smoke tests after deployment
+- ✓ Health check validation
+
+Secrets Required: docs/SECRETS.md
+
+Suggested Next Step:
+→ Review generated workflow file - Check deployment configuration matches infrastructure
+   THEN
+→ Add secrets to GitHub - Settings → Secrets and variables → Actions
+   (See docs/SECRETS.md for complete list)
+   THEN
+→ git add .github/workflows/release-*.yml state/ docs/SECRETS.md
+→ git commit -m "ci: add release stage pipeline for QA/UAT deployment"
+→ git push origin main
+   THEN
+→ Test deployment:
+   1. Run commit stage to get commit SHAs
+   2. Go to Actions → Release to Environment
+   3. Run workflow with commit SHAs
+   4. Monitor deployment logs
+   5. Verify health endpoints
+   THEN (if deployment successful)
+→ /acceptance-stage - Configure acceptance testing pipeline
+   OR (if all CI/CD complete)
+→ /plan <feature> - Return to feature development
+
+See: CLAUDE.md "CI/CD Pipeline" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without:**
+1. Generating the release workflow file(s)
+2. Creating secrets template (docs/SECRETS.md)
+3. Creating state directory structure
+4. Providing manual trigger instructions
+5. Suggesting secrets configuration and deployment testing
+6. Suggesting next pipeline stage (/acceptance-stage) or return to feature work

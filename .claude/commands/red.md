@@ -170,3 +170,33 @@ Once the test fails correctly, use `/green` to write the minimal implementation.
 - **Stub I/O boundaries** - Mock only repositories, services, HTTP clients
 - **Use builders** - Decouple tests from entity construction
 - **Behavior-focused names** - `"should register user when email is available"`
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 2 (Backend) or Phase 3 (Frontend) - Implementation (TDD Cycle)
+
+**Suggested Next Steps**:
+1. **If test fails with assertion error**: `/green` - Write minimal implementation to pass the test
+2. **If test fails with import/syntax error**: Create minimal stub, re-run test, then `/green`
+3. **If this was exploratory**: `/spike` - Continue technical exploration without test commitment
+
+**Output Format**:
+```
+✅ RED PHASE COMPLETE
+
+Test: [test name]
+File: [file path]
+Type: [test layer]
+Failure: [the assertion that failed]
+
+Suggested Next Step:
+→ /green - Write minimal code to make this test pass
+
+See: CLAUDE.md "TDD Cycle" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting /green as the next step.**

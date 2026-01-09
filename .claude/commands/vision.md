@@ -238,3 +238,36 @@ When you run `/plan` for a feature, the agent will:
 - `/plan` - Break down features aligned with vision
 - `/spike` - Explore technical approaches within constraints
 - `/code-review` - Verify implementation aligns with product principles
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 0 - Vision & Strategy (Pre-Implementation)
+
+**Suggested Next Steps**:
+1. **If vision documented**: `/plan <first feature>` - Start feature discovery for first user story
+2. **If need to document existing vision**: Create PRODUCT-VISION.md based on existing product strategy
+3. **If pivoting product direction**: Update vision document before planning new features
+
+**Output Format**:
+```
+✅ VISION DEFINED
+
+Product Vision saved to: PRODUCT-VISION.md
+
+Key Elements:
+- Problem: [problem being solved]
+- Target Users: [user segments]
+- Value Proposition: [unique value]
+- Success Metrics: [DORA + Business metrics]
+
+Suggested Next Step:
+→ /plan <first feature> - Start feature discovery and implementation planning
+
+See: CLAUDE.md "Vision and objectives" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting /plan for first feature implementation.**

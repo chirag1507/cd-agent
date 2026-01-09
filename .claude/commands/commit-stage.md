@@ -1348,3 +1348,59 @@ If yes, run pattern checks:
 - [commit-stage-pipeline.md](../rules/commit-stage-pipeline.md) - Pipeline rules and best practices
 - [test-strategy-reference](../../reference/test-strategy-reference/) - Test pyramid implementation
 - [cd-pipeline-reference](../../reference/cd-pipeline-reference/) - Complete CD pipeline architecture
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: CI/CD Setup - Commit Stage Pipeline Configuration
+
+**Suggested Next Steps**:
+1. **If pipeline just generated**: Review generated workflow file for correctness
+2. **If workflow looks good**: Commit workflow file, push to trigger first pipeline run
+3. **If pipeline runs successfully**: Monitor CI execution, verify all tests pass
+4. **If pipeline fails**: Review logs, fix issues, re-run pipeline
+5. **If commit stage complete**: `/release-stage` - Configure deployment pipeline to QA/UAT
+6. **If all pipelines configured**: Return to feature work - `/plan <feature>` or `/red <behavior>`
+
+**Output Format**:
+```
+✅ COMMIT STAGE PIPELINE GENERATED
+
+Workflow File: .github/workflows/[workflow-name].yml
+Type: [frontend / backend / monorepo]
+Package Manager: [pnpm / npm / yarn]
+Node Version: [version]
+
+Pipeline Features:
+- ✓ TypeScript compilation
+- ✓ Unit tests
+- ✓ Component tests
+- ✓ [Integration tests with database]
+- ✓ [Contract verification (Pact)]
+- ✓ Linting and static analysis
+- ✓ [Docker build & publish on main]
+
+Suggested Next Step:
+→ Review generated workflow file - Check configuration matches project needs
+   THEN
+→ git add .github/workflows/[name].yml && git commit -m "ci: add commit stage pipeline"
+   THEN
+→ git push origin main - Trigger first pipeline run
+   THEN
+→ Monitor pipeline execution - https://github.com/[org]/[repo]/actions
+   THEN (if pipeline passes)
+→ /release-stage - Configure deployment pipeline for QA/UAT environments
+   OR (if all CI/CD complete)
+→ /plan <feature> - Return to feature development
+
+See: CLAUDE.md "CI/CD Pipeline" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without:**
+1. Generating the workflow file
+2. Reviewing generated configuration
+3. Suggesting to commit, push, and monitor first pipeline run
+4. Suggesting next pipeline stage (/release-stage) or return to feature work

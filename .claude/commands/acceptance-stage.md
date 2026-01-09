@@ -620,4 +620,96 @@ The command generates a troubleshooting guide:
 
 ---
 
-**Next Steps**: After running this command, trigger the release stage to deploy to UAT, then run the acceptance stage to validate the deployment.
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: CI/CD Setup - Acceptance Stage Pipeline Configuration (Final Stage)
+
+**Suggested Next Steps**:
+1. **If workflow just generated**: Review generated workflow file for correctness
+2. **If workflow looks good**: Add required secrets to GitHub repository settings
+3. **If external stubs needed**: Deploy external system stubs (Docker Compose or separate workflow)
+4. **If secrets configured**: Commit workflow files and state directory, push to repository
+5. **If workflow committed**: Trigger release stage to deploy to UAT and create state files
+6. **If release deployed**: Wait for acceptance stage to run automatically (scheduled)
+7. **If acceptance tests pass**: Monitor test results and environment health
+8. **If acceptance stage working**: Complete CI/CD pipeline setup ✓
+9. **If all pipelines configured**: Return to feature work - `/plan <feature>` or `/red <behavior>`
+
+**Output Format**:
+```
+✅ ACCEPTANCE STAGE PIPELINE GENERATED
+
+Workflow File: .github/workflows/acceptance-stage-<env>.yml
+Target Environment: [UAT / QA]
+System Tests Repository: [repo-name]
+Schedule: [cron expression, e.g., */15 * * * *]
+External Stubs: [yes/no, list stub types]
+
+Pipeline Features:
+- ✓ Intelligent version-based test execution (skip if unchanged)
+- ✓ Sequential test layers (Smoke → Acceptance → Contract)
+- ✓ Backend connectivity diagnostics first
+- ✓ State file tracking for audit trail
+- ✓ Automatic scheduling (every 15 minutes)
+- ✓ Manual trigger support
+- ✓ Test container with Playwright/Cucumber
+- ✓ [External system stub integration]
+
+Supporting Files:
+- docker-compose.acceptance-local.yml (for local testing)
+- scripts/run-acceptance-local.sh (local test runner)
+- state/ directory structure
+
+Secrets Required:
+- <ENV>_BASE_URL
+- <ENV>_API_URL
+- PAT_FOR_SYSTEM_TESTS_REPO
+- [External stub URLs if configured]
+
+Suggested Next Step:
+→ Review generated workflow file - Check test execution order and version logic
+   THEN
+→ Add secrets to GitHub - Settings → Secrets and variables → Actions
+   (See command output for complete list)
+   THEN (if external stubs configured)
+→ Deploy external system stubs:
+   gh workflow run release-external-stubs-<env>.yml -f stub_version=main
+   OR
+   docker compose -f docker-compose.stubs.yml up -d
+   THEN
+→ git add .github/workflows/acceptance-*.yml state/ docker-compose.*.yml scripts/
+→ git commit -m "ci: add acceptance stage pipeline for automated system testing"
+→ git push origin main
+   THEN
+→ Trigger release stage to deploy to UAT:
+   gh workflow run release-uat.yml -f frontend_commit_sha=<sha> -f backend_commit_sha=<sha>
+   THEN
+→ Monitor acceptance stage:
+   Wait 15 minutes for scheduled run OR trigger manually:
+   gh workflow run acceptance-stage-<env>.yml
+   THEN
+→ Verify test results:
+   gh run list --workflow=acceptance-stage-<env>.yml
+   gh run view <run-id>
+   THEN (if all CI/CD stages working)
+→ Complete! Full CD pipeline operational:
+   ✓ Commit Stage - Build, test, publish artifacts
+   ✓ Release Stage - Deploy to environments with contract verification
+   ✓ Acceptance Stage - Validate deployments with system tests
+   THEN
+→ /plan <feature> - Return to feature development with full CI/CD safety net
+
+See: CLAUDE.md "CI/CD Pipeline" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without:**
+1. Generating the acceptance workflow file
+2. Creating Docker Compose for local testing
+3. Creating state directory structure
+4. Providing secrets template
+5. Suggesting stubs deployment (if configured)
+6. Suggesting release stage trigger to create deployment state
+7. Explaining version-based intelligent test execution
+8. Suggesting return to feature work once all CI/CD complete

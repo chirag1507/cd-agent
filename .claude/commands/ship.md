@@ -217,3 +217,41 @@ git push origin main
 - **Deploy to environment**: Trigger release workflow
 - **Start next feature**: `/plan [next feature]`
 - **Monitor**: Check CI pipeline and deployment
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Shipped to Main - Ready for Deployment
+
+**Suggested Next Steps**:
+1. **If CI/CD configured**: Monitor commit stage pipeline - should build and publish artifacts
+2. **If manual deployment**: Trigger release workflow to deploy to environment (QA/UAT/Production)
+3. **If starting next feature**: `/plan <feature>` - Begin discovery for next feature
+4. **If monitoring deployment**: Check DORA metrics and deployment health
+
+**Output Format**:
+```
+✅ FEATURE SHIPPED TO MAIN
+
+Branch: [feature branch]
+Merged to: main
+Merge Type: [rebase-merge | squash | merge commit]
+Commit: [SHA]
+
+CI Pipeline: [link to pipeline run]
+Status: [pending / running / success / failed]
+
+Suggested Next Step:
+→ Monitor CI pipeline - Commit stage should build artifacts
+   OR
+→ Trigger release workflow - Deploy to QA/UAT
+   OR
+→ /plan <next feature> - Start discovery for next feature
+
+See: CLAUDE.md "CI/CD Pipeline" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting to monitor CI pipeline or start next feature.**

@@ -200,3 +200,40 @@ git reset --hard HEAD~1
 - **Continue development**: Start next feature with `/plan`
 - **Ready to ship**: Use `/ship` to merge to main
 - **Push to remote**: `git push origin <branch>`
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Completed Implementation - Ready for Deployment
+
+**Suggested Next Steps**:
+1. **If feature branch complete**: `/ship` - Merge to main branch for deployment
+2. **If working on another behavior**: `/red <next behavior>` - Continue TDD on same feature
+3. **If starting new feature**: `/plan <feature>` - Begin discovery for next feature
+
+**Output Format**:
+```
+✅ COMMIT CREATED
+
+Commit: [commit SHA (first 7 chars)]
+Type: [feat|fix|refactor|test|docs]
+Message: [commit message]
+
+Branch: [branch name]
+Files Changed: [count]
+Tests: [status]
+
+Suggested Next Step:
+→ /ship - Merge to main branch (if feature complete)
+   OR
+→ /red <next behavior> - Continue development on current feature
+   OR
+→ /plan <feature> - Start next feature
+
+See: CLAUDE.md "Development Workflow" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting the appropriate next step based on feature status.**

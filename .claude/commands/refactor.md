@@ -280,3 +280,41 @@ Or commit progress: /commit
 - **More behaviors to implement**: Use `/red` for the next test
 - **Feature complete**: Use `/commit` to save progress
 - **Ready to ship**: Use `/ship` to merge
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 2 (Backend) or Phase 3 (Frontend) - Implementation (TDD Cycle)
+
+**Suggested Next Steps**:
+1. **If more behaviors to implement**: `/red [next behavior]` - Continue TDD cycle
+2. **If current test layer complete**: Move to next test layer (e.g., Unit → Integration → Component)
+3. **If feature implementation complete**: `/code-review` - Review code quality
+4. **If all layers done and reviewed**: `/commit` - Save progress with conventional commit
+
+**Output Format**:
+```
+✅ REFACTOR PHASE COMPLETE
+
+Changes Made:
+- [Refactoring 1]
+- [Refactoring 2]
+
+Tests: ALL PASSING ✓
+
+Suggested Next Step:
+→ /red [next behavior] - [if more work needed in current layer]
+   OR
+→ /red [next test layer] - [if moving to integration/component tests]
+   OR
+→ /code-review - [if feature complete, review before commit]
+   OR
+→ /commit - [if reviewed and ready to save]
+
+See: CLAUDE.md "TDD Cycle" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting the appropriate next step based on feature completeness.**

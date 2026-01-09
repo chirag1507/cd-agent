@@ -391,3 +391,42 @@ Or continue with next behavior: /red [next behavior]
 - **If code needs cleanup**: Use `/refactor` to improve structure
 - **If code is clean enough**: Use `/red` for the next behavior
 - **If feature is complete**: Use `/commit` to save progress
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 2 (Backend) or Phase 3 (Frontend) - Implementation (TDD Cycle)
+
+**Suggested Next Steps**:
+1. **If code has smells/duplication**: `/refactor` - Improve structure while tests stay green
+2. **If code is clean AND more behaviors needed**: `/red [next behavior]` - Continue TDD cycle
+3. **If this test layer is complete**: Consider next test layer or `/code-review`
+4. **If feature implementation complete**: `/code-review` - Review before commit
+
+**Output Format**:
+```
+✅ GREEN PHASE COMPLETE
+
+Test: [test name]
+Status: PASSING ✓
+Implementation: [what was added]
+
+Code Quality Assessment:
+- [Any code smells detected]
+- [Duplication issues]
+- [Naming concerns]
+
+Suggested Next Step:
+→ /refactor - [if code smells detected]
+   OR
+→ /red [next behavior] - [if more behaviors to implement]
+   OR
+→ /code-review - [if feature complete, review before commit]
+
+See: CLAUDE.md "TDD Cycle" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without assessing code quality and suggesting the appropriate next step.**

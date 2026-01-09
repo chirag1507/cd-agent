@@ -427,3 +427,38 @@ Next step: /driver [driver type to implement]
 1. **Define driver interface** in `drivers/interfaces/`
 2. **Implement Protocol Driver** with `/driver` command
 3. **Run tests** to verify the complete flow
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 1 - System Test Definition (DSL Layer Complete)
+
+**Suggested Next Steps**:
+1. **If Phase 1 complete (Gherkin + DSL done)**: `/red <first behavior>` - Start Phase 2 (Backend TDD implementation)
+2. **If need more Gherkin scenarios**: `/acceptance-test` - Write additional scenarios before implementation
+
+**Output Format**:
+```
+✅ DSL IMPLEMENTATION COMPLETE
+
+DSL Layer: [DSL class name]
+Location: dsl/[feature].dsl.ts
+Methods Implemented: [count]
+
+Test Data:
+- Builders: [count] created
+- Fixtures: [count] created
+- Models: [count] created
+
+Suggested Next Step:
+→ /red <first behavior> - Start backend TDD implementation (Phase 2)
+
+Note: Protocol drivers (/driver) come later in Phase 5 after backend/frontend are implemented.
+
+See: CLAUDE.md "Four-Layer Model" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting /red to start Phase 2 implementation.**

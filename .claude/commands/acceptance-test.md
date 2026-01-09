@@ -297,3 +297,39 @@ Builders live in `drivers/web/pages/builder/` and are used by DSL/drivers for te
 1. **DSL doesn't exist?** → Use `/dsl` to implement the Domain Specific Language (includes builders, fixtures)
 2. **Drivers don't exist?** → Use `/driver` to implement Protocol Drivers (includes page objects, services)
 3. **All layers exist?** → Run the test, then use `/red` for TDD implementation
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 1 - System Test Definition (Executable Specifications)
+
+**Suggested Next Steps**:
+1. **If DSL layer doesn't exist**: `/dsl` - Implement Domain Specific Language (shared test vocabulary)
+2. **If DSL exists**: Proceed to Phase 2 - `/red <first behavior>` - Start backend TDD implementation
+
+**Output Format**:
+```
+✅ ACCEPTANCE TEST WRITTEN
+
+Feature: [feature name]
+Scenarios: [count] written
+File: [path to .feature file]
+
+Test Layer Status:
+- Gherkin Feature: ✓ Written
+- DSL Layer: [✓ Exists / ✗ Needs /dsl]
+
+Suggested Next Step:
+→ /dsl - Implement Domain Specific Language for shared test vocabulary
+   OR
+→ /red <first behavior> - Start backend TDD implementation (Phase 2)
+
+Note: Protocol drivers (/driver) come later in Phase 5 after backend/frontend implementation.
+
+See: CLAUDE.md "Four-Layer Model" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting the appropriate next step based on test layer status.**

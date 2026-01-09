@@ -798,3 +798,45 @@ This command automatically applies all relevant rules:
 - You just want to test one layer (use `/red`, `/green`, `/refactor`)
 - You haven't planned the feature yet (use `/plan` first)
 - You haven't created the feature file (use `/acceptance-test` first)
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Completed Phases 2-5 (Backend → Frontend → Contracts → System Tests)
+
+**Suggested Next Steps**:
+1. **If all tests passing**: `/code-review` - Final review before commit
+2. **If review complete**: `/commit` - Create conventional commit with all changes
+3. **If committed**: `/ship` - Merge to main branch
+4. **If deployed**: Consider next feature with `/plan`
+
+**Output Format**:
+```
+✅ CYCLE COMPLETE - FEATURE READY TO COMMIT
+
+Summary:
+────────
+✓ Backend: [X] test layers passing
+✓ Frontend: [Y] test layers passing
+✓ Contracts: Verified
+✓ System Tests: All scenarios passing
+
+Files Created: [count]
+Tests Added: [count]
+All Tests: PASSING ✓
+
+Suggested Next Step:
+→ /code-review - [final review of all layers]
+   OR
+→ /commit - [if confident, create conventional commit]
+
+Alternative:
+→ /red [additional behavior] - [if missed functionality discovered]
+
+See: CLAUDE.md "Feature Implementation Flow" and docs/workflow-flowchart.md
+```
+
+**DO NOT complete this command without running all tests and suggesting /code-review or /commit.**

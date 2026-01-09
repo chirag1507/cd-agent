@@ -224,3 +224,38 @@ As a [user], I want [goal] so that [benefit]
 - **Before /plan**: Use `/spike` if technical exploration needed
 - **After /plan approval**: Use `/red` to start TDD on first task
 - **During work**: Return to plan to track progress
+
+---
+
+## MANDATORY: Workflow Checkpoint
+
+After completing this command, you MUST suggest the next step:
+
+**Current Phase**: Phase 0 - UNDERSTAND (Discovery and Planning)
+
+**Suggested Next Steps**:
+1. **If plan approved by user**: `/acceptance-test` - Start Phase 1 (System Test Definition) with first Gherkin scenario
+2. **If technical unknowns exist**: `/spike` - Technical exploration to resolve unknowns before committing to tests
+3. **If need to define product vision first**: `/vision` - Define strategic context before feature planning
+
+**Output Format**:
+```
+✅ PLAN COMPLETE
+
+Feature: [feature name]
+Behavioral Analysis:
+- Variants: [count] documented
+- Edge Cases: [count] identified
+- Questions: [count] resolved
+
+Plan saved to: [file path]
+
+Suggested Next Step:
+→ /acceptance-test - Write first Gherkin scenario (Phase 1: System Test Definition)
+   OR
+→ /spike [technical question] - Explore technical unknowns before committing to tests
+
+See: CLAUDE.md "Development Workflow" and docs/workflow-flowchart.md for complete workflow
+```
+
+**DO NOT complete this command without suggesting the appropriate next step based on plan approval.**
