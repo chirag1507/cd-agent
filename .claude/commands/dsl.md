@@ -18,8 +18,8 @@ $ARGUMENTS
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/acceptance-test.md` - Four-Layer Model and DSL patterns
-- `.claude/rules/code-style.md` - Code style and comment rules
+- `docs/rules/acceptance-test.md` - Four-Layer Model and DSL patterns
+- `docs/rules/code-style.md` - Code style and comment rules
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 

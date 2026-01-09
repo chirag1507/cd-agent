@@ -31,14 +31,14 @@ Based on the test layer context from `/red` or user response, **YOU MUST read th
 
 | Test Layer / Implementation Type | Required Rules to Load |
 |----------------------------------|------------------------|
-| **Sociable Unit (BE)** → Backend Use Case | `.claude/rules/code-style.md` |
-| **Component (BE)** → Backend Controller | `.claude/rules/controller-pattern-be.md`<br>`.claude/rules/infrastructure-services.md`<br>`.claude/rules/code-style.md` |
-| **Narrow Integration (BE)** → Backend Infrastructure | `.claude/rules/infrastructure-services.md`<br>`.claude/rules/code-style.md` |
-| **Backend Domain Entity/Value Object** | `.claude/rules/code-style.md` |
-| **Sociable Unit (FE)** → Frontend Use Case | `.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/code-style.md` |
-| **Component (FE)** → Frontend Component | `.claude/rules/atomic-design.md`<br>`.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/component-test-fe.md`<br>`.claude/rules/code-style.md` |
-| **Narrow Integration (FE)** → Frontend Hook | `.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/code-style.md` |
-| **Frontend Mapper** | `.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/code-style.md` |
+| **Sociable Unit (BE)** → Backend Use Case | `docs/rules/code-style.md` |
+| **Component (BE)** → Backend Controller | `docs/rules/controller-pattern-be.md`<br>`docs/rules/infrastructure-services.md`<br>`docs/rules/code-style.md` |
+| **Narrow Integration (BE)** → Backend Infrastructure | `docs/rules/infrastructure-services.md`<br>`docs/rules/code-style.md` |
+| **Backend Domain Entity/Value Object** | `docs/rules/code-style.md` |
+| **Sociable Unit (FE)** → Frontend Use Case | `docs/rules/clean-architecture-fe.md`<br>`docs/rules/code-style.md` |
+| **Component (FE)** → Frontend Component | `docs/rules/atomic-design.md`<br>`docs/rules/clean-architecture-fe.md`<br>`docs/rules/component-test-fe.md`<br>`docs/rules/code-style.md` |
+| **Narrow Integration (FE)** → Frontend Hook | `docs/rules/clean-architecture-fe.md`<br>`docs/rules/code-style.md` |
+| **Frontend Mapper** | `docs/rules/clean-architecture-fe.md`<br>`docs/rules/code-style.md` |
 
 **ACTION REQUIRED**: Use multiple Read tool calls in parallel to load the applicable rule files NOW.
 

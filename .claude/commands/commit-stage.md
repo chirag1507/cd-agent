@@ -12,8 +12,8 @@
 
 **Required Rules:**
 
-- `.claude/rules/commit-stage-pipeline.md` - Pipeline structure and best practices
-- `.claude/rules/dependency-management.md` - Package installation patterns
+- `docs/rules/commit-stage-pipeline.md` - Pipeline structure and best practices
+- `docs/rules/dependency-management.md` - Package installation patterns
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 
@@ -1028,9 +1028,9 @@ After creating the workflow, display:
   4. Verify the workflow runs successfully on GitHub Actions
 
 📚 Learn more:
-  - Commit Stage Pipeline Rules: .claude/rules/commit-stage-pipeline.md
+  - Commit Stage Pipeline Rules: docs/rules/commit-stage-pipeline.md
   - CI/CD Pipeline Reference: reference/cd-pipeline-reference/
-  - Provider Contract Testing: .claude/rules/contract-test-provider.md
+  - Provider Contract Testing: docs/rules/contract-test-provider.md
 
 🎯 What this pipeline does:
   ✓ Runs all tests (unit, component, integration, contract)

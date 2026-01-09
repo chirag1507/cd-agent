@@ -13,7 +13,7 @@ description: Review dependencies and generate gradual update plan
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/dependency-management.md` - Dependency installation and update patterns
+- `docs/rules/dependency-management.md` - Dependency installation and update patterns
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 

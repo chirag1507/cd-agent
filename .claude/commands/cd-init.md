@@ -18,7 +18,7 @@ $ARGUMENTS
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/dependency-management.md` - Always use @latest for all package installations
+- `docs/rules/dependency-management.md` - Always use @latest for all package installations
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 

@@ -1,8 +1,0 @@
-# Exclude rules from automatic context loading
-# Rules are loaded on-demand by skills to optimize context usage
-
-# Rule files (loaded by skills when needed)
-.claude/rules/
-
-# Keep these in memory (essential for all operations)
-# CLAUDE.md is still loaded automatically

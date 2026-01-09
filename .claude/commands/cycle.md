@@ -156,8 +156,8 @@ Enter choice (1-6) or customize:
 ### 2.1 Sociable Unit Tests → Use Case
 
 **File**: `features/<feature>/application/use-cases/<use-case>/<use-case>.use-case.test.ts`
-**Rule**: `.claude/rules/sociable-unit-test.md`
-**Pattern**: `.claude/rules/controller-pattern-be.md` for controllers
+**Rule**: `docs/rules/sociable-unit-test.md`
+**Pattern**: `docs/rules/controller-pattern-be.md` for controllers
 
 ```
 RED → GREEN → REFACTOR cycle for each behavior:
@@ -177,7 +177,7 @@ Key rules:
 ### 2.2 Narrow Integration Tests → Repository
 
 **File**: `features/<feature>/infrastructure/repositories/<repository>.integration.test.ts`
-**Rule**: `.claude/rules/narrow-integration-test.md`
+**Rule**: `docs/rules/narrow-integration-test.md`
 
 ```
 RED → GREEN → REFACTOR cycle:
@@ -195,7 +195,7 @@ Key rules:
 ### 2.3 Component Tests → Full Vertical Slice
 
 **File**: `features/<feature>/__tests__/component/<endpoint>.component.test.ts`
-**Rule**: `.claude/rules/component-test-be.md`
+**Rule**: `docs/rules/component-test-be.md`
 
 ```
 RED → GREEN → REFACTOR cycle:
@@ -226,7 +226,7 @@ Run: Internal review against `.claude/commands/code-review.md`
 ### 3.1 Use Case Tests → Use Case
 
 **File**: `features/<feature>/application/usecases/<use-case>.use-case.test.ts`
-**Rule**: `.claude/rules/sociable-unit-test-fe.md`
+**Rule**: `docs/rules/sociable-unit-test-fe.md`
 
 ```
 RED → GREEN → REFACTOR cycle:
@@ -244,7 +244,7 @@ Key rules:
 ### 3.2 Mapper Tests → Mappers
 
 **File**: `features/<feature>/mappers/<mapper>.mapper.test.ts`
-**Rule**: `.claude/rules/clean-architecture-fe.md`
+**Rule**: `docs/rules/clean-architecture-fe.md`
 
 ```
 RED → GREEN → REFACTOR cycle:
@@ -262,7 +262,7 @@ Key rules:
 ### 3.3 Hook Tests → Custom Hooks
 
 **File**: `features/<feature>/hooks/<hook>.test.ts`
-**Rule**: `.claude/rules/narrow-integration-test-fe.md`
+**Rule**: `docs/rules/narrow-integration-test-fe.md`
 
 ```
 RED → GREEN → REFACTOR cycle:
@@ -281,8 +281,8 @@ Key rules:
 
 **File**: `shared/components/<level>/<Component>/<Component>.test.tsx`
 **File**: `features/<feature>/components/<Component>.test.tsx`
-**Rule**: `.claude/rules/component-test-fe.md`
-**Rule**: `.claude/rules/atomic-design.md`
+**Rule**: `docs/rules/component-test-fe.md`
+**Rule**: `docs/rules/atomic-design.md`
 
 ```
 RED → GREEN → REFACTOR cycle:
@@ -316,7 +316,7 @@ Run: Internal review against `.claude/commands/code-review.md`
 ### 4.1 Consumer Contracts (Frontend)
 
 **File**: `features/<feature>/repositories/<repository>.pact.test.ts`
-**Rule**: `.claude/rules/contract-test-consumer.md`
+**Rule**: `docs/rules/contract-test-consumer.md`
 
 ```
 Define API expectations:
@@ -336,7 +336,7 @@ Key rules:
 ### 4.2 Provider Verification (Backend)
 
 **File**: `src/__tests__/contract/provider-contract.test.ts`
-**Rule**: `.claude/rules/contract-test-provider.md`
+**Rule**: `docs/rules/contract-test-provider.md`
 
 ```
 Verify provider honors contracts:
@@ -365,7 +365,7 @@ Check:
 ### 5.1 Step Definitions
 
 **File**: `<project>-system-tests/step_definitions/<feature>.steps.ts`
-**Rule**: `.claude/rules/acceptance-test.md`
+**Rule**: `docs/rules/acceptance-test.md`
 
 ```
 Map Gherkin to DSL:
@@ -383,7 +383,7 @@ Key rules:
 ### 5.2 Protocol Drivers
 
 **File**: `<project>-system-tests/drivers/<channel>/<feature>-<channel>-driver.ts`
-**Rule**: `.claude/rules/acceptance-test.md`
+**Rule**: `docs/rules/acceptance-test.md`
 **Command**: `/driver`
 
 ```
@@ -406,7 +406,7 @@ Key rules:
 
 **File**: `<project>-system-tests/drivers/web/pages/<page>.page.ts`
 **File**: `<project>-system-tests/drivers/web/services/<service>.service.ts`
-**Rule**: `.claude/rules/acceptance-test.md`
+**Rule**: `docs/rules/acceptance-test.md`
 
 ```
 Page Objects:
@@ -423,7 +423,7 @@ Services:
 ### 5.4 Test Data Builders
 
 **File**: `<project>-system-tests/drivers/web/pages/builder/<model>.builder.ts`
-**Rule**: `.claude/rules/acceptance-test.md`
+**Rule**: `docs/rules/acceptance-test.md`
 
 ```
 Builder Pattern:

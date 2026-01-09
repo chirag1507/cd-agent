@@ -35,14 +35,14 @@ Based on the code type identified, **YOU MUST read these rule files** in paralle
 
 | Code Type | Required Rules to Load |
 |-----------|------------------------|
-| **Backend Controller** | `.claude/rules/controller-pattern-be.md` - HttpRequest/HttpResponse, error mapping<br>`.claude/rules/infrastructure-services.md` - Port/Adapter for technical services<br>`.claude/rules/code-style.md` - Code style and comments |
-| **Backend Use Case** | `.claude/rules/code-style.md` - Code style and comments |
-| **Backend Infrastructure** | `.claude/rules/infrastructure-services.md` - Port/Adapter pattern<br>`.claude/rules/code-style.md` - Code style and comments |
-| **Backend Domain** | `.claude/rules/code-style.md` - Code style and comments |
-| **Frontend Component** | `.claude/rules/atomic-design.md` - Component hierarchy<br>`.claude/rules/clean-architecture-fe.md` - Frontend layer boundaries<br>`.claude/rules/component-test-fe.md` - Component testing<br>`.claude/rules/code-style.md` - Code style and comments |
-| **Frontend Use Case/Hook** | `.claude/rules/clean-architecture-fe.md` - No React in use cases, hooks pattern<br>`.claude/rules/code-style.md` - Code style and comments |
-| **Test Code** | `.claude/rules/test-doubles.md` - Stubs, spies, mocks<br>`.claude/rules/test-data-builders.md` - Builder pattern<br>`.claude/rules/test-flakiness.md` - Preventing flaky tests<br>`.claude/rules/code-style.md` - Code style and comments |
-| **Mixed** | `.claude/rules/code-style.md`<br>`.claude/rules/controller-pattern-be.md`<br>`.claude/rules/infrastructure-services.md`<br>`.claude/rules/atomic-design.md`<br>`.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/component-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/test-flakiness.md` |
+| **Backend Controller** | `docs/rules/controller-pattern-be.md` - HttpRequest/HttpResponse, error mapping<br>`docs/rules/infrastructure-services.md` - Port/Adapter for technical services<br>`docs/rules/code-style.md` - Code style and comments |
+| **Backend Use Case** | `docs/rules/code-style.md` - Code style and comments |
+| **Backend Infrastructure** | `docs/rules/infrastructure-services.md` - Port/Adapter pattern<br>`docs/rules/code-style.md` - Code style and comments |
+| **Backend Domain** | `docs/rules/code-style.md` - Code style and comments |
+| **Frontend Component** | `docs/rules/atomic-design.md` - Component hierarchy<br>`docs/rules/clean-architecture-fe.md` - Frontend layer boundaries<br>`docs/rules/component-test-fe.md` - Component testing<br>`docs/rules/code-style.md` - Code style and comments |
+| **Frontend Use Case/Hook** | `docs/rules/clean-architecture-fe.md` - No React in use cases, hooks pattern<br>`docs/rules/code-style.md` - Code style and comments |
+| **Test Code** | `docs/rules/test-doubles.md` - Stubs, spies, mocks<br>`docs/rules/test-data-builders.md` - Builder pattern<br>`docs/rules/test-flakiness.md` - Preventing flaky tests<br>`docs/rules/code-style.md` - Code style and comments |
+| **Mixed** | `docs/rules/code-style.md`<br>`docs/rules/controller-pattern-be.md`<br>`docs/rules/infrastructure-services.md`<br>`docs/rules/atomic-design.md`<br>`docs/rules/clean-architecture-fe.md`<br>`docs/rules/component-test-fe.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/test-data-builders.md`<br>`docs/rules/test-flakiness.md` |
 
 **ACTION REQUIRED**: Use multiple Read tool calls in parallel to load the applicable rule files NOW.
 

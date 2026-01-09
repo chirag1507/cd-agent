@@ -11,7 +11,7 @@
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/release-stage-pipeline.md` - Pipeline structure and deployment patterns
+- `docs/rules/release-stage-pipeline.md` - Pipeline structure and deployment patterns
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 
@@ -707,7 +707,7 @@ Create `docs/SECRETS.md`:
   5. Set up acceptance stage with /acceptance-stage
 
 📚 Learn more:
-  - Release Stage Pipeline Rules: .claude/rules/release-stage-pipeline.md
+  - Release Stage Pipeline Rules: docs/rules/release-stage-pipeline.md
   - CI/CD Pipeline Reference: reference/cd-pipeline-reference/
 ```
 

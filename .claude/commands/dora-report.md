@@ -581,7 +581,7 @@ Report updated!
 Deployment frequency and change failure rate may be inaccurate.
 
 Recommendation: Set up release-stage pipeline to track deployments.
-See: .claude/rules/release-stage-pipeline.md
+See: docs/rules/release-stage-pipeline.md
 ```
 
 ## Performance Optimization

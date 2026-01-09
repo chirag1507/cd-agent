@@ -11,8 +11,8 @@
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/acceptance-stage-pipeline.md` - Pipeline structure and test execution patterns
-- `.claude/rules/test-flakiness.md` - Preventing flaky tests (critical for reliable CI)
+- `docs/rules/acceptance-stage-pipeline.md` - Pipeline structure and test execution patterns
+- `docs/rules/test-flakiness.md` - Preventing flaky tests (critical for reliable CI)
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 
@@ -612,9 +612,9 @@ The command generates a troubleshooting guide:
 
 ## See Also
 
-- [.claude/rules/acceptance-stage-pipeline.md](../../.claude/rules/acceptance-stage-pipeline.md) - Pipeline rules
-- [.claude/rules/acceptance-test.md](../../.claude/rules/acceptance-test.md) - Writing acceptance tests
-- [.claude/rules/test-flakiness.md](../../.claude/rules/test-flakiness.md) - Preventing flaky tests
+- [docs/rules/acceptance-stage-pipeline.md](../../docs/rules/acceptance-stage-pipeline.md) - Pipeline rules
+- [docs/rules/acceptance-test.md](../../docs/rules/acceptance-test.md) - Writing acceptance tests
+- [docs/rules/test-flakiness.md](../../docs/rules/test-flakiness.md) - Preventing flaky tests
 - `/release-stage` - Deploy to environments before acceptance tests
 - `/commit-stage` - Build and test before deployment
 

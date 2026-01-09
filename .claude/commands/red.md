@@ -13,8 +13,25 @@ $ARGUMENTS
 
 ⚠️ **BEFORE PROCEEDING, YOU MUST:**
 
-1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
-2. **Confirm rules are loaded** (brief acknowledgment)
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel):
+   ```
+   Read docs/rules/sociable-unit-test.md
+   Read docs/rules/test-doubles.md
+   Read docs/rules/code-style.md
+   ```
+
+2. **Confirm rules are loaded** (brief acknowledgment):
+   ```
+   ✅ RULES LOADED
+
+   Rules Read:
+   - sociable-unit-test.md
+   - test-doubles.md
+   - code-style.md
+
+   Proceeding with strict rule compliance for TDD Red phase.
+   ```
+
 3. **Follow rules strictly** (non-negotiable)
 
 **If you cannot read the rule files, STOP and notify the user.**
@@ -67,15 +84,15 @@ Based on the test layer identified, **YOU MUST read these rule files**:
 
 | Layer | Required Rules to Read |
 |-------|------------------------|
-| **Sociable Unit** (BE) | `.claude/rules/sociable-unit-test.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
-| **Sociable Unit** (FE) | `.claude/rules/sociable-unit-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
-| **Component** (BE) | `.claude/rules/component-test-be.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
-| **Component** (FE) | `.claude/rules/component-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/code-style.md` |
-| **Narrow Integration** (BE) | `.claude/rules/narrow-integration-test.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
-| **Narrow Integration** (FE) | `.claude/rules/narrow-integration-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
-| **Contract** (Consumer) | `.claude/rules/contract-test-consumer.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
-| **Contract** (Provider) | `.claude/rules/contract-test-provider.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/code-style.md` |
-| **Acceptance** | `.claude/rules/acceptance-test.md`<br>`.claude/rules/test-flakiness.md`<br>`.claude/rules/code-style.md` |
+| **Sociable Unit** (BE) | `docs/rules/sociable-unit-test.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/test-data-builders.md`<br>`docs/rules/code-style.md` |
+| **Sociable Unit** (FE) | `docs/rules/sociable-unit-test-fe.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/test-data-builders.md`<br>`docs/rules/code-style.md` |
+| **Component** (BE) | `docs/rules/component-test-be.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/test-data-builders.md`<br>`docs/rules/code-style.md` |
+| **Component** (FE) | `docs/rules/component-test-fe.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/test-data-builders.md`<br>`docs/rules/code-style.md` |
+| **Narrow Integration** (BE) | `docs/rules/narrow-integration-test.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/code-style.md` |
+| **Narrow Integration** (FE) | `docs/rules/narrow-integration-test-fe.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/code-style.md` |
+| **Contract** (Consumer) | `docs/rules/contract-test-consumer.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/code-style.md` |
+| **Contract** (Provider) | `docs/rules/contract-test-provider.md`<br>`docs/rules/test-doubles.md`<br>`docs/rules/code-style.md` |
+| **Acceptance** | `docs/rules/acceptance-test.md`<br>`docs/rules/test-flakiness.md`<br>`docs/rules/code-style.md` |
 
 **ACTION REQUIRED:**
 - Use the Read tool to read ALL applicable rule files in parallel

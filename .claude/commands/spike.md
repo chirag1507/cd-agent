@@ -16,7 +16,7 @@ Conduct a time-boxed technical exploration to answer a specific question.
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/code-style.md` - Code style and comment rules
+- `docs/rules/code-style.md` - Code style and comment rules
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 

@@ -18,9 +18,9 @@ $ARGUMENTS
 3. **Follow rules strictly** (non-negotiable)
 
 **Required Rules:**
-- `.claude/rules/acceptance-test.md` - Four-Layer Model and Protocol Driver patterns
-- `.claude/rules/test-flakiness.md` - Preventing flaky tests (critical for reliability)
-- `.claude/rules/code-style.md` - Code style and comment rules
+- `docs/rules/acceptance-test.md` - Four-Layer Model and Protocol Driver patterns
+- `docs/rules/test-flakiness.md` - Preventing flaky tests (critical for reliability)
+- `docs/rules/code-style.md` - Code style and comment rules
 
 **ACTION REQUIRED**: Use Read tool to load these files NOW.
 

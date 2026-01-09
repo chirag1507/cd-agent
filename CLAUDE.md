@@ -180,7 +180,7 @@ Use-case driven design with strict dependency rules:
 - Return `Result<Success, BusinessError>` types
 - Cross-cutting concerns via decorators (logging, caching, session management)
 
-**Controller Pattern** (see `.claude/rules/controller-pattern-be.md`):
+**Controller Pattern** (see `docs/rules/controller-pattern-be.md`):
 - Thin HTTP adapters using HttpRequest/HttpResponse wrappers
 - Delegate business logic to Use Cases
 - Map domain errors to HTTP status using `instanceof`
@@ -701,7 +701,7 @@ Each feature follows this strict order:
 - [x] Testing strategy documented
 - [x] Ways of Working integrated
 - [x] Commands installed (13 commands in .claude/commands/)
-- [x] Test rules installed (13 rules in .claude/rules/)
+- [x] Test rules installed (21 rules in docs/rules/)
 - [x] Four-Layer Model with Scenarist integration
 - [x] npm package structure (package.json)
 - [x] User documentation (README.md)
