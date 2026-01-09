@@ -46,8 +46,8 @@ GOLDEN_DATASET = [
     {
         "scenario_id": "S2",
         "name": "Initialize Project",
-        "goal": "Verify that /orchestrate allows /cd-init even without state file",
-        "input": "/orchestrate cd-init backend",
+        "goal": "Verify that orchestrator initializes project without state file",
+        "input": "Initialize a backend project with workflow tracking",
         "context": {
             "state_file_exists": False,
             "current_phase": None,
@@ -61,6 +61,7 @@ GOLDEN_DATASET = [
         "expected_output_contains": [
             "initialized",
             "workflow-state.json",
+            "idle",
         ],
         "state_validation": {
             "current_phase": "idle",
