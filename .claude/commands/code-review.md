@@ -7,40 +7,62 @@ argument-hint: [file path or PR number]
 
 Review code against XP/CD principles, Clean Architecture, and testing standards.
 
-## CRITICAL: Mandatory Rule Loading
+## CRITICAL: Context-Aware Rule Loading
 
-⚠️ **BEFORE PROCEEDING, YOU MUST:**
+### Phase 1: Identify Code Type (MANDATORY)
 
-1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
-2. **Confirm rules are loaded** (brief acknowledgment)
-3. **Follow rules strictly** (non-negotiable)
+⚠️ **Ask the user:**
 
-**Required Rules:**
-- `.claude/rules/code-style.md` - Code style and comment rules
-- `.claude/rules/controller-pattern-be.md` - Controller pattern for backend
-- `.claude/rules/infrastructure-services.md` - Port/Adapter pattern for technical services
-- `.claude/rules/test-doubles.md` - Test double usage patterns
-- `.claude/rules/test-flakiness.md` - Preventing flaky tests
+**"What type of code are you reviewing?"**
 
-**ACTION REQUIRED**: Use Read tool to load these files NOW.
+Options:
+1. **Backend Controller** - HTTP request handling (presentation layer)
+2. **Backend Use Case** - Business logic (application layer)
+3. **Backend Infrastructure** - Repository/Service adapters (infrastructure layer)
+4. **Backend Domain** - Entities/Value Objects (domain layer)
+5. **Frontend Component** - UI components (presentation layer)
+6. **Frontend Use Case/Hook** - Business logic/state management (application layer)
+7. **Test Code** - Unit/Component/Integration tests
+8. **Mixed** - Multiple types (load all rules)
+
+**Wait for user response before proceeding.**
+
+---
+
+### Phase 2: Load Applicable Rules (MANDATORY)
+
+Based on the code type identified, **YOU MUST read these rule files** in parallel:
+
+| Code Type | Required Rules to Load |
+|-----------|------------------------|
+| **Backend Controller** | `.claude/rules/controller-pattern-be.md` - HttpRequest/HttpResponse, error mapping<br>`.claude/rules/infrastructure-services.md` - Port/Adapter for technical services<br>`.claude/rules/code-style.md` - Code style and comments |
+| **Backend Use Case** | `.claude/rules/code-style.md` - Code style and comments |
+| **Backend Infrastructure** | `.claude/rules/infrastructure-services.md` - Port/Adapter pattern<br>`.claude/rules/code-style.md` - Code style and comments |
+| **Backend Domain** | `.claude/rules/code-style.md` - Code style and comments |
+| **Frontend Component** | `.claude/rules/atomic-design.md` - Component hierarchy<br>`.claude/rules/clean-architecture-fe.md` - Frontend layer boundaries<br>`.claude/rules/component-test-fe.md` - Component testing<br>`.claude/rules/code-style.md` - Code style and comments |
+| **Frontend Use Case/Hook** | `.claude/rules/clean-architecture-fe.md` - No React in use cases, hooks pattern<br>`.claude/rules/code-style.md` - Code style and comments |
+| **Test Code** | `.claude/rules/test-doubles.md` - Stubs, spies, mocks<br>`.claude/rules/test-data-builders.md` - Builder pattern<br>`.claude/rules/test-flakiness.md` - Preventing flaky tests<br>`.claude/rules/code-style.md` - Code style and comments |
+| **Mixed** | `.claude/rules/code-style.md`<br>`.claude/rules/controller-pattern-be.md`<br>`.claude/rules/infrastructure-services.md`<br>`.claude/rules/atomic-design.md`<br>`.claude/rules/clean-architecture-fe.md`<br>`.claude/rules/component-test-fe.md`<br>`.claude/rules/test-doubles.md`<br>`.claude/rules/test-data-builders.md`<br>`.claude/rules/test-flakiness.md` |
+
+**ACTION REQUIRED**: Use multiple Read tool calls in parallel to load the applicable rule files NOW.
 
 **If you cannot read the rule files, STOP and notify the user.**
 
 ---
 
-### Mandatory Checkpoint: Confirm Rules Loaded
+### Phase 3: Confirm Rules Loaded (MANDATORY CHECKPOINT)
 
 After reading the rule files, you MUST output:
 
 ```
 ✅ RULES LOADED
 
+Code Type: [type identified]
 Rules Read:
-- code-style.md
-- controller-pattern-be.md
-- infrastructure-services.md
-- test-doubles.md
-- test-flakiness.md
+- [rule-1].md
+- [rule-2].md
+- [rule-3].md
+...
 
 Proceeding with strict rule compliance for code review.
 ```

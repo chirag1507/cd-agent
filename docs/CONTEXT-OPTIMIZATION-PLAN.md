@@ -19,9 +19,12 @@ Created `.claudeignore` to exclude `.claude/rules/` from automatic indexing.
 
 ---
 
-### Phase 2: Establish Mandatory Rule Loading Pattern ✅ IN PROGRESS
+### Phase 2: Establish Mandatory Rule Loading Pattern ✅ COMPLETE
 
-Refactor skills to load rules on-demand with **strict enforcement**.
+Refactor skills to load rules on-demand with **strict enforcement**. Implemented two patterns:
+
+1. **Context-Aware Pattern**: Commands that work with different code types (e.g., `/red`, `/green`, `/refactor`, `/code-review`) detect context and load appropriate rules automatically.
+2. **Static Pattern**: Commands with fixed requirements load specific rules every time (e.g., `/driver`, `/acceptance-test`, `/commit-stage`).
 
 #### Pattern Template (Applied to All Skills)
 
@@ -88,10 +91,12 @@ Proceeding with strict rule compliance.
 - ✅ `/release-stage` - Release Stage Pipeline (loads 1 rule)
 - ✅ `/acceptance-stage` - Acceptance Stage Pipeline (loads 2 rules)
 
-**Code Quality & Dependencies** - ✅ COMPLETE
-- ✅ `/code-review` - Code Review (loads 5 rules)
+**Code Quality & Dependencies** - ✅ COMPLETE (Context-Aware for /code-review)
+- ✅ `/code-review` - Code Review (context-aware: loads 1-9 rules based on code type)
 - ✅ `/dependency-review` - Dependency Review (loads 1 rule)
 - ✅ `/spike` - Technical Exploration (loads 1 rule)
+
+**Pattern:** `/code-review` asks what type of code is being reviewed (Backend Controller, Frontend Component, Test Code, etc.) and loads only relevant architecture rules.
 
 ---
 
