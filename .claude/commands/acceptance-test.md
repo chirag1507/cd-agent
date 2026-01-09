@@ -9,6 +9,44 @@ $ARGUMENTS
 
 (If no input provided, check conversation context for the behavior to specify)
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/acceptance-test.md` - Four-Layer Model and test structure
+- `.claude/rules/test-flakiness.md` - Preventing flaky tests (critical for reliability)
+- `.claude/rules/code-style.md` - Code style and comment rules
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- acceptance-test.md
+- test-flakiness.md
+- code-style.md
+
+Proceeding with strict rule compliance for test case implementation.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 **IMPORTANT: Leverage Frontend Screenshots (If Available)**
 
 Before writing acceptance tests, check if frontend reference materials exist:
