@@ -4,6 +4,40 @@ description: Review dependencies and generate gradual update plan
 
 # /dependency-review - Review Dependencies and Plan Updates
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/dependency-management.md` - Dependency installation and update patterns
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- dependency-management.md
+
+Proceeding with strict rule compliance for dependency review.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Purpose
 
 Analyze current project dependencies, identify available updates, categorize by risk level, and generate a safe, gradual update plan that can be executed incrementally with testing between each step.
