@@ -7,6 +7,22 @@ argument-hint: [feature name or continue from context]
 
 Execute Phases 2-5 of the workflow after you've completed Phase 0 (plan) and Phase 1 (feature file + DSL).
 
+## Rule Loading: Delegated to Sub-Commands
+
+⚠️ **This command does NOT load rules directly.**
+
+**Why:** `/cycle` is an orchestration command that delegates work to specialized commands:
+- `/red`, `/green`, `/refactor` - TDD cycle commands (load rules dynamically)
+- `/code-review` - Automated review gates (loads 5 rules)
+- Other workflow commands as needed
+
+**Each sub-command loads its own required rules** when invoked, ensuring strict rule compliance throughout the entire implementation cycle.
+
+**Rules Applied (via delegation):**
+See "Rules Applied" section at the end of this document for complete list of rules enforced by sub-commands.
+
+---
+
 ## Prerequisites
 
 **BEFORE running /cycle, you MUST have:**
