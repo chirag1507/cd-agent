@@ -69,37 +69,42 @@ Proceeding with strict rule compliance.
 ## [Rest of command content]
 ```
 
-#### Skills Refactored So Far
+#### Skills Refactored (9/15 Complete)
 
+**TDD Cycle** - ✅ COMPLETE
 - ✅ `/red` - TDD Red Phase (loads 3-4 rules based on test layer)
-- ✅ `/commit-stage` - CI/CD Pipeline (loads 2 rules)
+- ✅ `/green` - TDD Green Phase (loads code-style.md)
+- ✅ `/refactor` - TDD Refactor Phase (loads code-style.md)
+
+**Acceptance Testing** - ✅ COMPLETE
+- ✅ `/acceptance-test` - Write Executable Specification (loads 3 rules)
+- ✅ `/dsl` - Implement DSL (loads 2 rules)
+- ✅ `/driver` - Implement Protocol Drivers (loads 3 rules)
+
+**CI/CD Pipeline** - ✅ COMPLETE
+- ✅ `/commit-stage` - Commit Stage Pipeline (loads 2 rules)
+- ✅ `/release-stage` - Release Stage Pipeline (loads 1 rule)
+- ✅ `/acceptance-stage` - Acceptance Stage Pipeline (loads 2 rules)
 
 ---
 
-### Phase 3: Refactor Remaining Skills (TODO)
+### Phase 3: Refactor Remaining Skills (IN PROGRESS)
 
-Apply the pattern to all remaining skills:
+Apply the pattern to remaining skills:
 
-| Skill | Required Rules | Priority |
-|-------|----------------|----------|
-| `/green` | `code-style.md` | HIGH |
-| `/refactor` | `code-style.md` | HIGH |
-| `/acceptance-test` | `acceptance-test.md`, `test-flakiness.md`, `code-style.md` | HIGH |
-| `/dsl` | `acceptance-test.md`, `code-style.md` | HIGH |
-| `/driver` | `acceptance-test.md`, `test-flakiness.md`, `code-style.md` | HIGH |
-| `/plan` | (No rules, mainly exploration) | MEDIUM |
-| `/spike` | `code-style.md` | MEDIUM |
-| `/commit` | (No rules, git operation) | LOW |
-| `/ship` | (No rules, git operation) | LOW |
-| `/code-review` | (Reviews against rules, loads dynamically) | MEDIUM |
-| `/release-stage` | `release-stage-pipeline.md` | HIGH |
-| `/acceptance-stage` | `acceptance-stage-pipeline.md`, `test-flakiness.md` | HIGH |
-| `/dependency-review` | `dependency-management.md` | MEDIUM |
-| `/cd-init` | (Scaffolding command, no specific rules) | LOW |
-| `/vision` | (Strategic planning, no code rules) | LOW |
-| `/cycle` | (Orchestrates /red, /green, /refactor - inherits their rules) | MEDIUM |
-| `/dora-init` | (DORA metrics setup) | LOW |
-| `/dora-report` | (Reporting only) | LOW |
+| Skill | Required Rules | Priority | Status |
+|-------|----------------|----------|--------|
+| `/code-review` | (Reviews against rules, loads dynamically) | MEDIUM | ⏳ TODO |
+| `/dependency-review` | `dependency-management.md` | MEDIUM | ⏳ TODO |
+| `/plan` | (No rules, mainly exploration) | MEDIUM | ⏳ TODO |
+| `/spike` | `code-style.md` | MEDIUM | ⏳ TODO |
+| `/cycle` | (Orchestrates /red, /green, /refactor - inherits their rules) | MEDIUM | ⏳ TODO |
+| `/commit` | (No rules, git operation) | LOW | ⏳ TODO |
+| `/ship` | (No rules, git operation) | LOW | ⏳ TODO |
+| `/cd-init` | (Scaffolding command, no specific rules) | LOW | ⏳ TODO |
+| `/vision` | (Strategic planning, no code rules) | LOW | ⏳ TODO |
+| `/dora-init` | (DORA metrics setup) | LOW | ⏳ TODO |
+| `/dora-report` | (Reporting only) | LOW | ⏳ TODO |
 
 ---
 
