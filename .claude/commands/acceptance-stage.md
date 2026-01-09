@@ -2,6 +2,42 @@
 
 > Set up automated acceptance testing pipeline that runs system-level tests against deployed environments.
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/acceptance-stage-pipeline.md` - Pipeline structure and test execution patterns
+- `.claude/rules/test-flakiness.md` - Preventing flaky tests (critical for reliable CI)
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- acceptance-stage-pipeline.md
+- test-flakiness.md
+
+Proceeding with strict rule compliance for acceptance stage workflow generation.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Purpose
 
 Create a GitHub Actions workflow that automatically runs acceptance tests, smoke tests, and external system contract tests against a deployed acceptance environment (typically UAT). This workflow validates the entire system from a user's perspective and verifies integration with external system stubs.
