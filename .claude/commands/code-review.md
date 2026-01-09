@@ -7,6 +7,48 @@ argument-hint: [file path or PR number]
 
 Review code against XP/CD principles, Clean Architecture, and testing standards.
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/code-style.md` - Code style and comment rules
+- `.claude/rules/controller-pattern-be.md` - Controller pattern for backend
+- `.claude/rules/infrastructure-services.md` - Port/Adapter pattern for technical services
+- `.claude/rules/test-doubles.md` - Test double usage patterns
+- `.claude/rules/test-flakiness.md` - Preventing flaky tests
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- code-style.md
+- controller-pattern-be.md
+- infrastructure-services.md
+- test-doubles.md
+- test-flakiness.md
+
+Proceeding with strict rule compliance for code review.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Input
 
 $ARGUMENTS
