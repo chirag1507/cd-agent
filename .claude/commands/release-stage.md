@@ -2,6 +2,40 @@
 
 > **Trigger**: User runs `/release-stage` to initialize the release stage workflow for deploying to environments
 
+## CRITICAL: Mandatory Rule Loading
+
+⚠️ **BEFORE PROCEEDING, YOU MUST:**
+
+1. **Read ALL required rule files** (use multiple Read tool calls in parallel)
+2. **Confirm rules are loaded** (brief acknowledgment)
+3. **Follow rules strictly** (non-negotiable)
+
+**Required Rules:**
+- `.claude/rules/release-stage-pipeline.md` - Pipeline structure and deployment patterns
+
+**ACTION REQUIRED**: Use Read tool to load these files NOW.
+
+**If you cannot read the rule files, STOP and notify the user.**
+
+---
+
+### Mandatory Checkpoint: Confirm Rules Loaded
+
+After reading the rule files, you MUST output:
+
+```
+✅ RULES LOADED
+
+Rules Read:
+- release-stage-pipeline.md
+
+Proceeding with strict rule compliance for release stage workflow generation.
+```
+
+**DO NOT SKIP THIS CHECKPOINT.**
+
+---
+
 ## Purpose
 
 Automate the setup of a production-ready release stage pipeline that handles deployment to QA/UAT/Production environments with contract verification, smoke tests, and deployment tracking. This command creates a GitHub Actions workflow for manual release triggers with environment-specific configurations.
