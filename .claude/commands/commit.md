@@ -7,6 +7,19 @@ argument-hint: [optional commit description]
 
 Create a git commit following project standards.
 
+## Rule Loading: Not Required
+
+⚠️ **This command does NOT require rule loading.**
+
+**Why:** The `/commit` command is a git utility that:
+- Creates conventional commits
+- Formats commit messages
+- Manages git operations
+
+**No code generation** occurs, therefore no coding rules are needed.
+
+---
+
 ## Input
 
 $ARGUMENTS

@@ -7,6 +7,19 @@ argument-hint: [optional PR title]
 
 Merge completed, tested work to the main branch.
 
+## Rule Loading: Not Required
+
+⚠️ **This command does NOT require rule loading.**
+
+**Why:** The `/ship` command is a git utility that:
+- Merges branches to main
+- Creates pull requests
+- Manages git workflows
+
+**No code generation** occurs, therefore no coding rules are needed.
+
+---
+
 ## Input
 
 $ARGUMENTS
