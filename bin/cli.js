@@ -12,6 +12,7 @@ const COMMANDS_DIR = path.join(__dirname, '..', '.claude', 'commands');
 const RULES_DIR = path.join(__dirname, '..', '.claude', 'rules');
 const DOCS_DIR = path.join(__dirname, '..', 'docs');
 const CLAUDE_MD = path.join(__dirname, '..', 'CLAUDE.md');
+const CLAUDEIGNORE = path.join(__dirname, '..', '.claudeignore');
 const REPO_URL = 'https://github.com/chirag1507/cd-agent.git';
 
 function copyDir(src, dest) {
@@ -90,6 +91,7 @@ function fetchFromBranch(branch, targetDir) {
       rulesDir: path.join(tempDir, '.claude', 'rules'),
       docsDir: path.join(tempDir, 'docs'),
       claudeMd: path.join(tempDir, 'CLAUDE.md'),
+      claudeignore: path.join(tempDir, '.claudeignore'),
       cleanup: () => {
         if (fs.existsSync(tempDir)) {
           fs.rmSync(tempDir, { recursive: true, force: true });
@@ -196,7 +198,8 @@ function init(options = {}) {
       commandsDir: branchData.commandsDir,
       rulesDir: branchData.rulesDir,
       docsDir: branchData.docsDir,
-      claudeMd: branchData.claudeMd
+      claudeMd: branchData.claudeMd,
+      claudeignore: branchData.claudeignore
     };
     cleanup = branchData.cleanup;
   } else {
@@ -205,7 +208,8 @@ function init(options = {}) {
       commandsDir: COMMANDS_DIR,
       rulesDir: RULES_DIR,
       docsDir: DOCS_DIR,
-      claudeMd: CLAUDE_MD
+      claudeMd: CLAUDE_MD,
+      claudeignore: CLAUDEIGNORE
     };
   }
 
@@ -248,6 +252,15 @@ function init(options = {}) {
       console.log('✓ Copied workflow-flowchart.md to docs/');
     } else {
       console.log('⚠ workflow-flowchart.md not found, skipping');
+    }
+
+    // Copy .claudeignore (required for context optimization)
+    const claudeignoreTarget = path.join(targetDir, '.claudeignore');
+    if (fs.existsSync(sourcePaths.claudeignore)) {
+      fs.copyFileSync(sourcePaths.claudeignore, claudeignoreTarget);
+      console.log('✓ Copied .claudeignore');
+    } else {
+      console.log('⚠ .claudeignore not found, skipping');
     }
 
     // Copy CLAUDE.md if requested
